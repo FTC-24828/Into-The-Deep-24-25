@@ -19,7 +19,7 @@ public class Vector2D {
                 return this;
         }
 
-        public Vector2D Add(Vector2D v) {
+        public Vector2D add(Vector2D v) {
                 return new Vector2D(x + v.x, y + v.y);
         }
 
@@ -27,10 +27,12 @@ public class Vector2D {
                 return Math.hypot(x, y);
         }
 
+        public double direction() {
+                return Math.atan2(y, x);
+        }
+
         public Vector2D scale(double scalar) {
-                this.x *= scalar;
-                this.y *= scalar;
-                return this;
+                return new Vector2D(x * scalar, y * scalar);
         }
 
         public Vector2D clamp(double min, double max) {

@@ -35,9 +35,9 @@ public class Localizer {
     }
 
     public void init() {
-        left = () -> robot.doubleSubscriber(Sensors.Encoder.POD_LEFT);
-        middle = () -> robot.doubleSubscriber(Sensors.Encoder.POD_MIDDLE);
-        right = () -> robot.doubleSubscriber(Sensors.Encoder.POD_RIGHT);
+//        left = () -> robot.doubleSubscriber(Sensors.Encoder.POD_LEFT);
+//        middle = () -> robot.doubleSubscriber(Sensors.Encoder.POD_MIDDLE);
+//        right = () -> robot.doubleSubscriber(Sensors.Encoder.POD_RIGHT);
         read();
     }
 

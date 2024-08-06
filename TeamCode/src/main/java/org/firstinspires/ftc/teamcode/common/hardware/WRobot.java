@@ -7,10 +7,12 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.geometry.Pose2d;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.AnalogSensor;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -22,14 +24,9 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
+import org.firstinspires.ftc.teamcode.common.hardware.drive.SwervePod;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Localizer;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Drone;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Hang;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
-import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WActuator;
-import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WEncoder;
-import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WServo;
+import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
@@ -47,34 +44,10 @@ public class WRobot {
 
     //drivetrain
     public DcMotorEx[] motor = new DcMotorEx[4];
-    public DcMotorEx middle_port;
-    public WEncoder pod_left;
-    public WEncoder pod_middle;
-    public WEncoder pod_right;
+    public CRServo[] servo = new CRServo[4];
+    public WAnalogEncoder[] heading_encoder = new WAnalogEncoder[4];
+    public SwervePod[] pod = new SwervePod[4];
     public Localizer localizer;
-
-    //arm
-    public DcMotorEx lift;
-    public WServo wrist0;
-    public WServo wrist1;
-    public WActuator arm_actuator;
-    public WActuator wrist_actuator;
-    public WEncoder arm_encoder;
-
-    //intake
-    public WServo claw_right;
-    public WServo claw_left;
-
-    //drone
-    public WServo trigger;
-
-    //hang
-    public DcMotorEx hang_left;
-    public DcMotorEx hang_right;
-    public WEncoder hang_encoder;
-    public WActuator hang_actuator;
-    public WServo hook_left;
-    public WServo hook_right;
 
     private final Object imu_lock = new Object();
     @GuardedBy("imu_lock")
@@ -99,10 +72,6 @@ public class WRobot {
     //subsystems
     private List<WSubsystem> subsystems;
     public Drivetrain drivetrain;
-    public Arm arm;
-    public Intake intake;
-    public Hang hang;
-    public Drone drone;
 
     public  HashMap<Sensors.Encoder, Object> encoder_readings;
     public HashMap<Sensors.Sensor, Object> sensor_readings;
@@ -129,16 +98,6 @@ public class WRobot {
             ));
             imu.resetYaw();
         }
-//        if (Global.USING_IMU) {
-//            synchronized (imu_lock) {
-//                imu = hardware_map.get(BNO055IMU.class, "imu");
-//                BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-//                parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-//                imu.initialize(parameters);
-//            }
-//            //imu_thread.setDaemon(true);
-//            resetYaw();
-//        }
 
         if (Global.USING_WEBCAM) {
             pipeline = new PropPipeline();
@@ -160,54 +119,25 @@ public class WRobot {
         motor[1] = hardware_map.get(DcMotorEx.class, "motorRearRight");
         motor[2] = hardware_map.get(DcMotorEx.class, "motorRearLeft");
         motor[3] = hardware_map.get(DcMotorEx.class, "motorFrontLeft");
-        middle_port = hardware_map.get(DcMotorEx.class, "podMiddle");
-        pod_left = new WEncoder(new MotorEx(hardware_map, "motorFrontRight").encoder);
-        pod_middle = new WEncoder(new MotorEx(hardware_map, "podMiddle").encoder);
-        pod_right = new WEncoder(new MotorEx(hardware_map, "motorRearRight").encoder);
-        encoder_readings.put(Sensors.Encoder.POD_LEFT, 0.0);
-        encoder_readings.put(Sensors.Encoder.POD_MIDDLE, 0.0);
-        encoder_readings.put(Sensors.Encoder.POD_RIGHT, 0.0);
-        drivetrain.init(motor);
-        localizer.init();
 
+        servo[0] = hardware_map.get(CRServo.class, "servoFrontRight");
+        servo[1] = hardware_map.get(CRServo.class, "servoRearRight");
+        servo[2] = hardware_map.get(CRServo.class, "servoRearLeft");
+        servo[3] = hardware_map.get(CRServo.class, "servoFrontLeft");
 
-        //arm
-        lift = hardware_map.get(DcMotorEx.class, "lift");
-        arm_encoder = new WEncoder(new MotorEx(hardware_map, "lift").encoder);
-        encoder_readings.put(Sensors.Encoder.ARM_ENCODER, 0);
-        arm_actuator = new WActuator(() -> intSubscriber(Sensors.Encoder.ARM_ENCODER), lift)
-                .setReadingOffset(0);
-        arm.init(lift);
+        heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontRight"));
+        heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearRight"));
+        heading_encoder[2] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearLeft"));
+        heading_encoder[3] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontLeft"));
 
+        pod[0] = new SwervePod();
+        pod[1] = new SwervePod();
+        pod[2] = new SwervePod();
+        pod[3] = new SwervePod();
 
-        //intake
-        wrist0 = new WServo(hardware_map.get(Servo.class, "wrist0")).setWritingOffset(0.5);
-        wrist1 = new WServo(hardware_map.get(Servo.class, "wrist1")).setWritingOffset(0.5);
-        claw_right = new WServo(hardware_map.get(Servo.class, "clawRight"));
-        claw_left = new WServo(hardware_map.get(Servo.class, "clawLeft"));
-        wrist_actuator = new WActuator(wrist0::getPosition, wrist0, wrist1);
-        intake.init(wrist0, wrist1, claw_left, claw_right);
+        drivetrain.init(motor, servo, heading_encoder);
+//        localizer.init();
 
-        //endgame subsystems
-        if (!Global.IS_AUTO) {
-            //drone
-            if (drone != null) {
-                trigger = new WServo(hardware_map.get(Servo.class, "trigger"));
-                drone.init(trigger);
-            }
-
-            //hang
-            if (hang != null) {
-                hang_left = hardware_map.get(DcMotorEx.class, "hang0");
-                hang_right = hardware_map.get(DcMotorEx.class, "podMiddle");
-                hang_encoder = new WEncoder(new MotorEx(hardware_map, "hang0").encoder);
-                encoder_readings.put(Sensors.Encoder.HANG_ENCODER, 0);
-                hang_actuator = new WActuator(hang_left, hang_right);
-                hook_left = new WServo(hardware_map.get(Servo.class, "hook0"));
-                hook_right = new WServo(hardware_map.get(Servo.class, "hook1"));
-                hang.init(hang_left, hang_right, hook_left, hook_right);
-            }
-        }
 
         //lynx hubs
         hubs = hardware_map.getAll(LynxModule.class);
@@ -228,15 +158,6 @@ public class WRobot {
         for (WSubsystem subsystem : subsystems) {
             switch (subsystem.getClass().getSimpleName()) {
                 case "Drivetrain": drivetrain = (Drivetrain) subsystem; break;
-
-                case "Arm": arm = (Arm) subsystem; break;
-
-                case "Intake": intake = (Intake) subsystem; break;
-
-                case "Hang": hang = (Hang) subsystem; break;
-
-                case "Drone": drone = (Drone) subsystem; break;
-
                 default:
                     throw new ClassCastException("Failed to add subsystem.");
             }
@@ -255,16 +176,6 @@ public class WRobot {
 
     //read encoder values
     public void read () {
-        encoder_readings.put(Sensors.Encoder.ARM_ENCODER, arm_encoder.getPosition());
-        if (hang != null) encoder_readings.put(Sensors.Encoder.HANG_ENCODER, hang_encoder.getPosition());
-
-        if (Global.IS_AUTO) {
-            encoder_readings.put(Sensors.Encoder.POD_LEFT, -pod_left.getPosition());
-            encoder_readings.put(Sensors.Encoder.POD_MIDDLE, -pod_middle.getPosition());
-            encoder_readings.put(Sensors.Encoder.POD_RIGHT, pod_right.getPosition());
-            localizer.update();
-        }
-
         for (WSubsystem subsystem : subsystems) {
             subsystem.read();
         }
@@ -281,10 +192,6 @@ public class WRobot {
             subsystem.reset();
         }
         drivetrain = null;
-        arm = null;
-        intake = null;
-        hang = null;
-        drone = null;
     }
 
     public double getVoltage() {

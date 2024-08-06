@@ -4,7 +4,7 @@ public class Global {
     public enum Hub {CONTROL_HUB, EXPANSION_HUB, BOTH}
     public enum Side {BLUE, RED}
     public enum PropLocation {LEFT, RIGHT, CENTER}
-    public enum State {SCORING, INTERMEDIATE, INTAKE, LAUNCHING, HANGING}
+    public enum State {SCORING, INTERMEDIATE, INTAKE}
 
     public static final int TETRIX_MOTOR_TPR = 1440;
     public static final int GOBILDA_ENCODER_TPR = 2000;
@@ -19,8 +19,7 @@ public class Global {
     public static State STATE = State.INTERMEDIATE;
 
     public static void resetGlobals() {
-        USING_DASHBOARD = false; IS_AUTO = false; USING_IMU = false; USING_WEBCAM = false; DEBUG = false; SIDE = null;
-        STATE = State.INTERMEDIATE; YAW_OFFSET = 0;
+        USING_DASHBOARD = false; IS_AUTO = false; USING_IMU = false; USING_WEBCAM = false; DEBUG = false; SIDE = null; YAW_OFFSET = 0;
     }
 
     public static void setState(State state) {

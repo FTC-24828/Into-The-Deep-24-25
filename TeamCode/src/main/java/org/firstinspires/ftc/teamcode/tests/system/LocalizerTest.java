@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmode.tests.system;
+package org.firstinspires.ftc.teamcode.tests.system;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
@@ -11,11 +11,8 @@ import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.Sensors;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
-import org.firstinspires.ftc.teamcode.common.util.WMath;
 
 
 @TeleOp(name = "localizer test", group = "Utility")
@@ -43,7 +40,7 @@ public class LocalizerTest extends CommandOpMode {
         //if is auto, must declare color
 
         //initialize robot
-        robot.addSubsystem(new Drivetrain(), new Arm(), new Intake());
+        robot.addSubsystem(new Drivetrain());
         robot.init(hardwareMap, telemetry);
         robot.localizer.reset(new Pose());
 
@@ -90,10 +87,10 @@ public class LocalizerTest extends CommandOpMode {
         telemetry.addData("d_theta", "%.5f", robot.localizer.d_theta);
         telemetry.addData("delta distance", "%.3f, %.3f, %.3f",
                 robot.localizer.d_left, robot.localizer.d_middle, robot.localizer.d_right);
-        telemetry.addData("Encoder readings", "%.2f, %.2f, %.2f",
-                robot.encoder_readings.get(Sensors.Encoder.POD_LEFT),
-                robot.encoder_readings.get(Sensors.Encoder.POD_MIDDLE),
-                robot.encoder_readings.get(Sensors.Encoder.POD_RIGHT));
+        telemetry.addData("Encoder readings", "%.2f, %.2f, %.2f");
+//                robot.encoder_readings.get(Sensors.Encoder.POD_LEFT),
+//                robot.encoder_readings.get(Sensors.Encoder.POD_MIDDLE),
+//                robot.encoder_readings.get(Sensors.Encoder.POD_RIGHT));
         telemetry.update();
     }
 

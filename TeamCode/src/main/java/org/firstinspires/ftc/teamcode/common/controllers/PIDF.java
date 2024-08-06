@@ -1,9 +1,8 @@
 package org.firstinspires.ftc.teamcode.common.controllers;
 
-import com.qualcomm.robotcore.robocol.TelemetryMessage;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.opmode.tests.dashboard.PIDConstants;
+import org.firstinspires.ftc.teamcode.tests.dashboard.PIDConstants;
 
 public class PIDF {
     private final ElapsedTime timer = new ElapsedTime();

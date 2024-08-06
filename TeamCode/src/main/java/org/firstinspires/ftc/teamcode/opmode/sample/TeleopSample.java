@@ -10,8 +10,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 
 @Disabled //remove this to activate opmode
 @TeleOp(name = "tele opmode name")
@@ -32,7 +30,7 @@ public class TeleopSample extends CommandOpMode {
         //if is auto, must declare color
 
         //initialize robot
-        robot.addSubsystem(new Drivetrain(), new Intake(), new Arm());
+        robot.addSubsystem(new Drivetrain());
         robot.init(hardwareMap, telemetry);
 
         //get controller

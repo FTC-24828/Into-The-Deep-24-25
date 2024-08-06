@@ -10,12 +10,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 
 @Disabled //remove this to activate opmode
 @Autonomous(name = "auto opmode name")
@@ -36,7 +33,7 @@ public class AutoSample extends CommandOpMode {
         //if is auto, must declare color
 
         //initialize robot
-        robot.addSubsystem(new Drivetrain(), new Intake(), new Arm());
+        robot.addSubsystem(new Drivetrain());
         robot.init(hardwareMap, telemetry);
 
         //if using ftc dashboard
@@ -71,8 +68,7 @@ public class AutoSample extends CommandOpMode {
         robot.write(); //write power to actuators (setting power to motors/servos)
         robot.clearBulkCache(Global.Hub.BOTH); //clear cache accordingly to get new read() values
 
-        //display data
-        telemetry.addData("Runtime: ", end_time == 0 ? timer.seconds() : end_time);
+        //display data        telemetry.addData("Runtime: ", end_time == 0 ? timer.seconds() : end_time);
         telemetry.update();
     }
 
