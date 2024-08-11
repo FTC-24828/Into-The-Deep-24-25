@@ -33,6 +33,9 @@ public class PIDF {
     public PIDF (double Kp, double Ki, double Kd) {
         this(Kp, Ki, Kd, 0, 0, 0);
     }
+    public PIDF (double Kp, double Ki, double Kd, double Kf) {
+        this(Kp, Ki, Kd, Kd, 1000, 0);
+    }
 
     public void set(double Kp, double Ki, double Kd, double Kf, double lim, double maxErr) {
         this.Kp = Kp;
@@ -44,12 +47,11 @@ public class PIDF {
     }
 
     public double calculate(double error) {
-        if (error <= tolerance && error >= -tolerance) return 0;  //acceptable error range exit
+        if (Math.abs(error) < tolerance) return 0;  //in acceptable error range then exit
 
         //integral calculation with integral limit
         integral += (error * timer.seconds());
-        if (integral > intLim) integral = intLim;
-        if (integral < -intLim) integral = -intLim;
+        if (Math.abs(integral) > intLim) integral = intLim * Math.signum(integral);
 
         //noise filter for derivative
         derivative = Kf * prev_estimate + (1 - Kf) * (error - last_error);
@@ -72,8 +74,7 @@ public class PIDF {
 
         //integral calculation with integral limit
         integral += (error * timer.seconds());
-        if (integral > intLim) integral = intLim;
-        if (integral < -intLim) integral = -intLim;
+        if (Math.abs(integral) > intLim) integral = intLim * Math.signum(integral);
 
         //noise filter for derivative
         derivative = Kf * prev_estimate + (1 - Kf) * (error - last_error);
@@ -106,26 +107,23 @@ public class PIDF {
     }
 
     public static PIDF create(double Kp, double Ki, double Kd, double Kf, double lim, double maxErr) {
-        PIDF obj = new PIDF(Kp, Ki, Kd, Kf, lim, maxErr);
-        return obj;
+        return new PIDF(Kp, Ki, Kd, Kf, lim, maxErr);
     }
 
     public static PIDF create(double Kp, double Ki, double Kd) {
-        PIDF obj = new PIDF(Kp, Ki, Kd, 100, 0, 0);
-        return obj;
+        return new PIDF(Kp, Ki, Kd, 1, 1000, 0);
     }
 
     public static PIDF create(double Kp, double Ki, double Kd, double Kf, double lim) {
-        PIDF obj = new PIDF(Kp, Ki, Kd, Kf, lim, 0);
-        return obj;
+        return new PIDF(Kp, Ki, Kd, Kf, lim, 0);
     }
 
-    public void set(PIDConstants obj) {
-        this.Kp = obj.Kp;
-        this.Kd = obj.Kd;
-        this.Ki = obj.Ki;
-        this.Kf = obj.Kf;
-        this.intLim = obj.lim;
-        this.tolerance = obj.maxErr;
+    public void set() {
+        this.Kp = PIDConstants.Kp;
+        this.Kd = PIDConstants.Kd;
+        this.Ki = PIDConstants.Ki;
+        this.Kf = PIDConstants.Kf;
+        this.intLim = PIDConstants.lim;
+        this.tolerance = PIDConstants.maxErr;
     }
 }

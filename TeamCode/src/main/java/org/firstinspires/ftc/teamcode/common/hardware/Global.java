@@ -5,6 +5,7 @@ public class Global {
     public enum Side {BLUE, RED}
     public enum PropLocation {LEFT, RIGHT, CENTER}
     public enum State {SCORING, INTERMEDIATE, INTAKE}
+    public enum DriveMode {FIELD, ROBOT}
 
     public static final int TETRIX_MOTOR_TPR = 1440;
     public static final int GOBILDA_ENCODER_TPR = 2000;

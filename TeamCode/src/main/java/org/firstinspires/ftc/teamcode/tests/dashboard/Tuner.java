@@ -57,7 +57,7 @@ public class Tuner extends OpMode {
     public void loop() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        armControl.set(new PIDConstants());
+        armControl.set();
 
         motor.setDirection(DcMotorSimple.Direction.FORWARD);
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

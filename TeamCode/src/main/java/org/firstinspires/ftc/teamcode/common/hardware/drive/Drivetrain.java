@@ -32,10 +32,10 @@ public class Drivetrain implements WSubsystem {
     public void init (DcMotorEx[] motor, CRServo[] servo, WAnalogEncoder[] encoder) {
 //      set drivetrain properties
 
-        motor[0].setDirection(DcMotorSimple.Direction.FORWARD);
-        motor[1].setDirection(DcMotorSimple.Direction.FORWARD);
-        motor[2].setDirection(DcMotorSimple.Direction.REVERSE);
-        motor[3].setDirection(DcMotorSimple.Direction.REVERSE);
+        motor[0].setDirection(DcMotorSimple.Direction.REVERSE);
+        motor[1].setDirection(DcMotorSimple.Direction.REVERSE);
+        motor[2].setDirection(DcMotorSimple.Direction.FORWARD);
+        motor[3].setDirection(DcMotorSimple.Direction.FORWARD);
 
         motor[0].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motor[1].setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -66,6 +66,11 @@ public class Drivetrain implements WSubsystem {
         encoder[1].setInverted(false);
         encoder[2].setInverted(false);
         encoder[3].setInverted(false);
+
+        encoder[0].setOffset(-1.401);
+        encoder[1].setOffset(-0.923);
+        encoder[2].setOffset(-1.527);
+        encoder[3].setOffset(-0.814);
 
         normalHeading();
 
@@ -108,7 +113,7 @@ public class Drivetrain implements WSubsystem {
         double power = Math.hypot(x, y);
         if (inactive_timer == null) inactive_timer = new ElapsedTime();
         if (WMath.max(Math.abs(x), Math.abs(y), Math.abs(z)) < 0.1) {
-            if (inactive_timer.seconds() > 3) normalHeading();
+//            if (inactive_timer.seconds() > 2.5) normalHeading();
             resetTargetPower();
             return;
         }
@@ -119,10 +124,10 @@ public class Drivetrain implements WSubsystem {
         double sin = Math.sin(TANGENT_TO_CENTER) * z;
 
         Vector2D[] translated_vector = new Vector2D[4];
-        translated_vector[0] = new Vector2D(x - cos, y - sin);      //  [3]_____[0]   +z is cw
-        translated_vector[1] = new Vector2D(x - cos, y + sin);      //   |   ^   |
-        translated_vector[2] = new Vector2D(x + cos, y + sin);      //   |   |   |       +x
-        translated_vector[3] = new Vector2D(x + cos, y - sin);      //  [2]_____[1]   +y__|
+        translated_vector[0] = new Vector2D(x + cos, y - sin);      //  [0]_____[3]   +z is cw
+        translated_vector[1] = new Vector2D(x + cos, y + sin);      //   |   ^   |
+        translated_vector[2] = new Vector2D(x - cos, y + sin);      //   |   |   |       +x
+        translated_vector[3] = new Vector2D(x - cos, y - sin);      //  [1]_____[2]   +y__|
 
         double max = 1;
         for (Vector2D v : translated_vector)
@@ -181,17 +186,17 @@ public class Drivetrain implements WSubsystem {
     }
 
     public void normalHeading() {
-        target_heading[0] = TANGENT_TO_CENTER - Math.PI / 2;
-        target_heading[1] = -TANGENT_TO_CENTER + Math.PI / 2;
-        target_heading[2] = TANGENT_TO_CENTER - Math.PI / 2;
-        target_heading[3] = -TANGENT_TO_CENTER + Math.PI / 2;
+        target_heading[0] = -TANGENT_TO_CENTER + Math.PI / 2;
+        target_heading[1] = TANGENT_TO_CENTER - Math.PI / 2;
+        target_heading[2] = -TANGENT_TO_CENTER + Math.PI / 2;
+        target_heading[3] = TANGENT_TO_CENTER - Math.PI / 2;
     }
 
     public void tangentHeading() {
-        target_heading[0] = TANGENT_TO_CENTER;
-        target_heading[1] = -TANGENT_TO_CENTER;
-        target_heading[2] = TANGENT_TO_CENTER;
-        target_heading[3] = -TANGENT_TO_CENTER;
+        target_heading[0] = -TANGENT_TO_CENTER;
+        target_heading[1] = TANGENT_TO_CENTER;
+        target_heading[2] = -TANGENT_TO_CENTER;
+        target_heading[3] = TANGENT_TO_CENTER;
     }
 //
 //    public String toString() {

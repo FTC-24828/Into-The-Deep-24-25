@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.tests.system;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
+import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -42,10 +43,15 @@ public class SwerveTest extends CommandOpMode {
         //initialize robot
         robot.addSubsystem(new Drivetrain());
         robot.init(hardwareMap, telemetry);
-        robot.drivetrain.setPodsHeading(0);
+//        robot.drivetrain.setPodsHeading(0);
 //        robot.drivetrain.overrideHeading();
 
         controller = new GamepadEx(gamepad1);
+
+        //bind
+        Trigger double_joystick = new Trigger(
+                (controller.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
+                        .and(new GamepadButton(controller, GamepadKeys.Button.RIGHT_STICK_BUTTON))::get));
 
         //manual pods rotation
         controller.getGamepadButton(GamepadKeys.Button.X)
@@ -74,9 +80,7 @@ public class SwerveTest extends CommandOpMode {
         controller.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenHeld(new InstantCommand(() -> robot.drivetrain.setPodsHeading(Math.PI)));
 
-        controller.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
-                .and(new GamepadButton(controller, GamepadKeys.Button.RIGHT_STICK_BUTTON))
-                .whenActive(() -> robot.drivetrain.reset());
+        double_joystick.whenActive(() -> robot.drivetrain.reset());
 
         controller.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new InstantCommand(() -> {if (pod_index < 3) ++pod_index;}));

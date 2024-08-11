@@ -27,6 +27,7 @@ public class Main extends CommandOpMode {
     private double loop_time = 0.0;
 
     private double INITIAL_YAW = Global.YAW_OFFSET;
+    private Global.DriveMode drive_mode = Global.DriveMode.FIELD;
     private boolean SLOW_MODE = false;
 
     private ElapsedTime timer;
@@ -57,12 +58,20 @@ public class Main extends CommandOpMode {
                 (controller1.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
                 .and(new GamepadButton(controller1, GamepadKeys.Button.RIGHT_STICK_BUTTON))::get));
 
+        //reset yaw
+        controller1.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+                        .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw()));
+
         //slow mode
-        controller1.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
+        controller1.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(new InstantCommand(() -> SLOW_MODE = true))
                 .whenReleased(new InstantCommand(() -> SLOW_MODE = false));
 
-        double_joystick.whenActive(() -> robot.drivetrain.reset());
+        //switch between field-centric and robot-centric
+        double_joystick.whenActive(new InstantCommand(() -> {
+           if (drive_mode == Global.DriveMode.FIELD) drive_mode = Global.DriveMode.ROBOT;
+           else drive_mode = Global.DriveMode.FIELD;
+        }));
 
         while (opModeInInit()) {
             telemetry.addLine("Initialization complete.");
@@ -77,12 +86,14 @@ public class Main extends CommandOpMode {
             timer = new ElapsedTime();
             robot.startIMUThread(() -> true);
         }
+
         robot.read();
 
-        Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(), 0);
-//                WMath.wrapAngle(robot.getYaw() - INITIAL_YAW));
-        if (SLOW_MODE) input_vector = input_vector.scale(0.4);
-        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.4 : 1));
+        double yaw = WMath.wrapAngle(robot.getYaw() - INITIAL_YAW);
+        Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(),
+                (drive_mode == Global.DriveMode.FIELD ? yaw : 0));
+        if (SLOW_MODE) input_vector = input_vector.scale(0.25);
+        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.25 : 1));
 
         super.run();
 
@@ -94,7 +105,8 @@ public class Main extends CommandOpMode {
         telemetry.addData("Timer", "%.0f", timer.seconds());
         telemetry.addData("Frequency", "%.2fhz", 1000000000 / (loop - loop_time));
         telemetry.addData("Voltage", "%.2f", robot.getVoltage());
-        telemetry.addData("Yaw", "%.2f", WMath.wrapAngle(robot.getYaw() - INITIAL_YAW));
+        telemetry.addData("Yaw", "%.2f", yaw);
+        telemetry.addData("Drive Mode", drive_mode);
 
         if (Global.DEBUG) {
             telemetry.addLine("------------------------------------------");
@@ -102,6 +114,16 @@ public class Main extends CommandOpMode {
             telemetry.addData("left x", controller1.getLeftX());
             telemetry.addData("right x", controller1.getRightX());
             telemetry.addData("inactive time", robot.drivetrain.inactive_timer.seconds());
+
+            telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].wrappedError() ,
+                    robot.pod[1].wrappedError(),
+                    robot.pod[2].wrappedError(),
+                    robot.pod[3].wrappedError());
+
+            telemetry.addData("servo power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getServoPower() ,
+                    robot.pod[1].getServoPower(),
+                    robot.pod[2].getServoPower(),
+                    robot.pod[3].getServoPower());
         }
 
         telemetry.update();

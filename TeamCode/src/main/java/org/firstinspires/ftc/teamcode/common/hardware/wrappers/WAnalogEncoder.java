@@ -12,6 +12,7 @@ public class WAnalogEncoder implements HardwareDevice {
     private double prev_reading = 0;
     private double current_position;
     private boolean inverted = false;
+    public double offset = 0.0;
 
     public WAnalogEncoder(AnalogInput enc) {
         encoder = enc;
@@ -48,7 +49,8 @@ public class WAnalogEncoder implements HardwareDevice {
     }
 
     public double getPosition() {
-        double current_reading = (!inverted ? getVoltage() : max_voltage - getVoltage()) / max_voltage * WMath.twoPI;
+        double current_reading = ((!inverted ? getVoltage() : max_voltage - getVoltage()) + offset)
+                / max_voltage * WMath.twoPI;
         double delta = current_reading - prev_reading;
         if (delta > Math.PI) delta -= WMath.twoPI;
         else if (delta < -Math.PI) delta += WMath.twoPI;
@@ -58,6 +60,8 @@ public class WAnalogEncoder implements HardwareDevice {
     }
 
     public void setVoltageRange(double v) { max_voltage = v; }
+
+    public void setOffset(double o) { offset = o; }
 
     public double getVoltage() {return encoder.getVoltage();}
 

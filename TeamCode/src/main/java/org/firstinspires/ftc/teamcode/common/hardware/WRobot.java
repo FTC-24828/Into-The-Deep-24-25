@@ -115,20 +115,20 @@ public class WRobot {
         encoder_readings = new HashMap<>();
 
         //drivetrain
-        motor[0] = hardware_map.get(DcMotorEx.class, "motorFrontRight");
-        motor[1] = hardware_map.get(DcMotorEx.class, "motorRearRight");
-        motor[2] = hardware_map.get(DcMotorEx.class, "motorRearLeft");
-        motor[3] = hardware_map.get(DcMotorEx.class, "motorFrontLeft");
+        motor[0] = hardware_map.get(DcMotorEx.class, "motorFrontLeft");     //  [0]_____[3]
+        motor[1] = hardware_map.get(DcMotorEx.class, "motorRearLeft");      //   |   ^   |
+        motor[2] = hardware_map.get(DcMotorEx.class, "motorRearRight");     //   |   |   |
+        motor[3] = hardware_map.get(DcMotorEx.class, "motorFrontRight");    //  [1]_____[2]
 
-        servo[0] = hardware_map.get(CRServo.class, "servoFrontRight");
-        servo[1] = hardware_map.get(CRServo.class, "servoRearRight");
-        servo[2] = hardware_map.get(CRServo.class, "servoRearLeft");
-        servo[3] = hardware_map.get(CRServo.class, "servoFrontLeft");
+        servo[0] = hardware_map.get(CRServo.class, "servoFrontLeft");
+        servo[1] = hardware_map.get(CRServo.class, "servoRearLeft");
+        servo[2] = hardware_map.get(CRServo.class, "servoRearRight");
+        servo[3] = hardware_map.get(CRServo.class, "servoFrontRight");
 
-        heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontRight"));
-        heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearRight"));
-        heading_encoder[2] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearLeft"));
-        heading_encoder[3] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontLeft"));
+        heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontLeft"));
+        heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearLeft"));
+        heading_encoder[2] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearRight"));
+        heading_encoder[3] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontRight"));
 
         pod[0] = new SwervePod();
         pod[1] = new SwervePod();
