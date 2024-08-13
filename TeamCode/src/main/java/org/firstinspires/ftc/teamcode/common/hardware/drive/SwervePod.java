@@ -18,8 +18,8 @@ public class SwervePod implements WSubsystem {
     private double target_power = 0;
     private double target_heading = 0;
     private double prev_target_heading = 0;
-    private double prev_motor_power = 0;
-    private double prev_servo_power = 0;
+    private double current_motor_power = 0;
+    private double current_servo_power = 0;
     private double current_heading;
     public boolean heading_override = false;
     public boolean resetting = false;
@@ -27,12 +27,12 @@ public class SwervePod implements WSubsystem {
     public PIDF heading_controller;
     public static double kP = 0.6;
     public static double kI = 0;
-    public static double kD = 0.002;
+    public static double kD = 0.01;
     public static double kF = 0;
 
     public double HEADING_TO_SERVO_RATIO = 1.0;
-    public double HEADING_TOLERANCE = 0.01;
-    public double POWER_TOLERANCE = 0.02;
+    public double HEADING_TOLERANCE = 0.02;
+    public double POWER_TOLERANCE = 0.1;
     public double POWER_DEADZONE = 0.05;
 
     public void init(DcMotorEx m, CRServo s, WAnalogEncoder e) {
@@ -52,27 +52,25 @@ public class SwervePod implements WSubsystem {
     }
 
     public void write() {
-        if (Math.abs(target_power - prev_motor_power) > POWER_TOLERANCE) {
-            target_power *= (Math.abs(WMath.wrapAngle(target_heading - current_heading)) > Math.PI/2 ?
-                    -1 : 1);
-            if (Math.abs(target_power - prev_motor_power) > 0.15)
-                target_power = prev_motor_power + 0.1 * Math.signum(target_power - prev_motor_power);
-            motor.setPower(WMath.clamp(target_power, -0.5, 0.5));
-            prev_motor_power = target_power;
+        double error = wrappedError();
+        if (Math.abs(error) > Math.PI/4.0 || Math.abs(target_power) < POWER_DEADZONE) target_power = 0;
+        else target_power *= (Math.abs(WMath.wrapAngle(target_heading - current_heading)) > Math.PI/2 ? -1 : 1);
+        if (Math.abs(target_power - current_motor_power) > POWER_TOLERANCE
+            || (target_power == 0 && current_motor_power != 0)) {
+            if (target_power != 0)
+                target_power = current_motor_power + 0.05 * Math.signum(target_power - current_motor_power);
+            motor.setPower(WMath.clamp(target_power, -0.7, 0.7));
+            current_motor_power = target_power;
         }
 
-        double error = wrappedError();
-        if (Math.abs(target_heading - prev_target_heading) > HEADING_TOLERANCE) {
-            prev_target_heading = target_heading;
-            heading_controller.reset();
-        }
         double servo_power = heading_controller.calculate(error);
-        if (Math.abs(servo_power) < POWER_DEADZONE) servo_power = 0;
-        if (Math.abs(error) > HEADING_TOLERANCE
-                && Math.abs(servo_power - prev_servo_power) > POWER_TOLERANCE
+        if (Math.abs(servo_power) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
+            servo_power = 0;
+        if ((Math.abs(servo_power - current_servo_power) > POWER_TOLERANCE
+                || (servo_power == 0 && current_servo_power != 0))
                 && !heading_override) {
-            servo.setPower(servo_power);
-            prev_servo_power = servo_power;
+            servo.setPower(WMath.clamp(servo_power, -1, 1));
+            current_servo_power = servo_power;
         }
         else if (resetting) resetToZero();
     }

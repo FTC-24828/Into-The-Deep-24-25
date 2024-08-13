@@ -53,8 +53,7 @@ public class WRobot {
     @GuardedBy("imu_lock")
     private IMU imu;
     public Thread imu_thread;
-    public double imu_offset = 0;
-    private double yaw = 0;
+    private volatile double yaw = 0;
 
     public List<LynxModule> hubs;
     public LynxModule control_hub;
@@ -92,8 +91,8 @@ public class WRobot {
             imu = hardware_map.get(IMU.class, "imu");
             imu.initialize(new IMU.Parameters(
                     new RevHubOrientationOnRobot(
-                            RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
-                            RevHubOrientationOnRobot.UsbFacingDirection.UP
+                            RevHubOrientationOnRobot.LogoFacingDirection.DOWN,
+                            RevHubOrientationOnRobot.UsbFacingDirection.RIGHT
                     )
             ));
             imu.resetYaw();

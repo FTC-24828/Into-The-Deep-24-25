@@ -49,6 +49,7 @@ public class Main extends CommandOpMode {
             telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
             FtcDashboard.getInstance().startCameraStream(robot.pipeline, 0);
         }
+        telemetry.setMsTransmissionInterval(250);
 
         controller1 = new GamepadEx(gamepad1);
         controller2 = new GamepadEx(gamepad2);
@@ -70,7 +71,10 @@ public class Main extends CommandOpMode {
         //switch between field-centric and robot-centric
         double_joystick.whenActive(new InstantCommand(() -> {
            if (drive_mode == Global.DriveMode.FIELD) drive_mode = Global.DriveMode.ROBOT;
-           else drive_mode = Global.DriveMode.FIELD;
+           else {
+               drive_mode = Global.DriveMode.FIELD;
+               INITIAL_YAW = robot.getYaw();
+           }
         }));
 
         while (opModeInInit()) {
@@ -92,8 +96,8 @@ public class Main extends CommandOpMode {
         double yaw = WMath.wrapAngle(robot.getYaw() - INITIAL_YAW);
         Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(),
                 (drive_mode == Global.DriveMode.FIELD ? yaw : 0));
-        if (SLOW_MODE) input_vector = input_vector.scale(0.25);
-        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.25 : 1));
+        if (SLOW_MODE) input_vector = input_vector.scale(0.4);
+        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.4 : 1));
 
         super.run();
 

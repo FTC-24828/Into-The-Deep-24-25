@@ -67,7 +67,7 @@ public class Drivetrain implements WSubsystem {
         encoder[2].setInverted(false);
         encoder[3].setInverted(false);
 
-        encoder[0].setOffset(-1.401);
+        encoder[0].setOffset(-1.431);
         encoder[1].setOffset(-0.923);
         encoder[2].setOffset(-1.527);
         encoder[3].setOffset(-0.814);
@@ -113,7 +113,7 @@ public class Drivetrain implements WSubsystem {
         double power = Math.hypot(x, y);
         if (inactive_timer == null) inactive_timer = new ElapsedTime();
         if (WMath.max(Math.abs(x), Math.abs(y), Math.abs(z)) < 0.1) {
-//            if (inactive_timer.seconds() > 2.5) normalHeading();
+            if (inactive_timer.seconds() > 2.5) normalHeading();
             resetTargetPower();
             return;
         }
