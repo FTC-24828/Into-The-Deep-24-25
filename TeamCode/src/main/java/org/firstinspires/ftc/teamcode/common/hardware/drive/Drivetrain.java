@@ -72,17 +72,17 @@ public class Drivetrain implements WSubsystem {
         }
     }
 
-    public void periodic() {
-        for (int i=0; i<4; i++) {
-            robot.pod[i].setTargetPower(target_power[i]);
-            robot.pod[i].setTargetHeading(target_heading[i]);
-        }
-    }
-
     public void read() {
         for (int i=0; i<4; i++) {
             robot.pod[i].read();
             current_heading[i] = robot.pod[i].getPodHeading();
+        }
+    }
+
+    public void update() {
+        for (int i=0; i<4; i++) {
+            robot.pod[i].setMotorTargetPower(target_power[i]);
+            robot.pod[i].setTargetHeading(target_heading[i]);
         }
     }
 

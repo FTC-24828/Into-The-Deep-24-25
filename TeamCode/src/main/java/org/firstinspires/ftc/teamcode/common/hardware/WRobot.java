@@ -161,13 +161,13 @@ public class WRobot {
     }
 
 
-    public void periodic() {
+    public void update() {
         if (timer.seconds() > 5) {
             timer.reset();
             voltage = hardware_map.voltageSensor.iterator().next().getVoltage();
         }
 
-        for (WSubsystem subsystem : subsystems) { subsystem.periodic(); }
+        for (WSubsystem subsystem : subsystems) { subsystem.update(); }
     }
 
     //read encoder values

@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.outoftheboxrobotics.photoncore.Photon;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -17,6 +18,7 @@ import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
 
+@Photon
 @TeleOp (name = "MainTeleOp")
 public class Main extends CommandOpMode {
     private final WRobot robot = WRobot.getInstance();
@@ -101,7 +103,7 @@ public class Main extends CommandOpMode {
 
         super.run();
 
-        robot.periodic();
+        robot.update();
         robot.write();
         robot.clearBulkCache(Global.Hub.CONTROL_HUB);
 
@@ -119,10 +121,10 @@ public class Main extends CommandOpMode {
             telemetry.addData("right x", controller1.getRightX());
             telemetry.addData("inactive time", robot.drivetrain.inactive_timer.seconds());
 
-            telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].wrappedError() ,
-                    robot.pod[1].wrappedError(),
-                    robot.pod[2].wrappedError(),
-                    robot.pod[3].wrappedError());
+            telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].minError() ,
+                    robot.pod[1].minError(),
+                    robot.pod[2].minError(),
+                    robot.pod[3].minError());
 
             telemetry.addData("servo power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getServoPower() ,
                     robot.pod[1].getServoPower(),

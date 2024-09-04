@@ -71,7 +71,7 @@ public class LocalizerTest extends CommandOpMode {
         Vector2D local_vector = new Vector2D(controller.getLeftX(), controller.getLeftY(), 0);
         local_vector.scale(0.4);
 
-        robot.periodic(); //calculations/writing data to actuators
+        robot.update(); //calculations/writing data to actuators
 
         robot.drivetrain.move(local_vector, controller.getRightX() * 0.4);
 

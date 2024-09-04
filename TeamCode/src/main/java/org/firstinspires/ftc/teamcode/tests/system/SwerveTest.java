@@ -105,7 +105,7 @@ public class SwerveTest extends CommandOpMode {
         }
 
         super.run(); //runs commands scheduled in initialize()
-        robot.periodic(); //calculations/writing data to actuators
+        robot.update(); //calculations/writing data to actuators
         robot.write(); //write power to actuators (setting power to motors/servos)
         robot.clearBulkCache(Global.Hub.CONTROL_HUB); //clear cache accordingly to get new read() values
 
@@ -115,7 +115,7 @@ public class SwerveTest extends CommandOpMode {
         telemetry.addData("index", pod_index);
         telemetry.addData("heading", Math.toDegrees(robot.drivetrain.current_heading[pod_index]));
         telemetry.addData("target heading", Math.toDegrees(robot.drivetrain.target_heading[pod_index]));
-        telemetry.addData("wrap error", robot.pod[pod_index].wrappedError());
+        telemetry.addData("wrap error", robot.pod[pod_index].minError());
         telemetry.addData("servo power", robot.pod[pod_index].getServoPower());
         telemetry.addData("encoder voltage", "%.5fv", robot.heading_encoder[pod_index].getVoltage());
         telemetry.addData("encoder position", Math.toDegrees(robot.heading_encoder[pod_index].getPosition()));
