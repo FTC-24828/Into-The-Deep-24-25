@@ -26,7 +26,7 @@ public class WEncoder implements HardwareDevice {
 
     @Override
     public String getDeviceName() {
-        return "rulz";
+        return null;
     }
 
     @Override

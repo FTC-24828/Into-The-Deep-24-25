@@ -5,16 +5,13 @@ import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.vision.PropPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.opencv.core.Scalar;
 
 @Config
 @TeleOp(name = "PipelineTest", group = "Utility")

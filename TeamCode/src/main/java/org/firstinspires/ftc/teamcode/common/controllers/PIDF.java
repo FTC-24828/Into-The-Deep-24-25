@@ -46,6 +46,7 @@ public class PIDF {
         this.tolerance = maxErr;
     }
 
+    /**return and output based on error value*/
     public double calculate(double error) {
         if (Math.abs(error) < tolerance) return 0;  //in acceptable error range then exit
 
@@ -66,7 +67,7 @@ public class PIDF {
         return output;
     }
 
-    // return and output based on the current state vs the target state
+    /**return and output based on the current state vs the target state*/
     public double calculate(double current, double target) {
         if (target != last_target) this.reset(target);
         double error = target - current;

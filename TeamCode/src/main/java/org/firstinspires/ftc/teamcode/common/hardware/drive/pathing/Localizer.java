@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.common.hardware.drive.pathing;
 import com.acmerobotics.dashboard.config.Config;
 
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
-import org.firstinspires.ftc.teamcode.common.hardware.Sensors;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 import org.firstinspires.ftc.teamcode.common.util.WMath;

@@ -1,21 +1,14 @@
 package org.firstinspires.ftc.teamcode.common.hardware.drive;
 
-import android.annotation.TargetApi;
-
-import com.arcrobotics.ftclib.hardware.ServoEx;
-import com.fasterxml.jackson.databind.Module;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WSubsystem;
-import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
 
@@ -79,17 +72,17 @@ public class Drivetrain implements WSubsystem {
         }
     }
 
-    public void periodic() {
-        for (int i=0; i<4; i++) {
-            robot.pod[i].setTargetPower(target_power[i]);
-            robot.pod[i].setTargetHeading(target_heading[i]);
-        }
-    }
-
     public void read() {
         for (int i=0; i<4; i++) {
             robot.pod[i].read();
             current_heading[i] = robot.pod[i].getPodHeading();
+        }
+    }
+
+    public void update() {
+        for (int i=0; i<4; i++) {
+            robot.pod[i].setMotorTargetPower(target_power[i]);
+            robot.pod[i].setTargetHeading(target_heading[i]);
         }
     }
 

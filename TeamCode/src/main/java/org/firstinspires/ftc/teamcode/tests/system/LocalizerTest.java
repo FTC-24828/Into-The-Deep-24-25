@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
-import org.firstinspires.ftc.teamcode.common.hardware.Sensors;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
@@ -72,7 +71,7 @@ public class LocalizerTest extends CommandOpMode {
         Vector2D local_vector = new Vector2D(controller.getLeftX(), controller.getLeftY(), 0);
         local_vector.scale(0.4);
 
-        robot.periodic(); //calculations/writing data to actuators
+        robot.update(); //calculations/writing data to actuators
 
         robot.drivetrain.move(local_vector, controller.getRightX() * 0.4);
 

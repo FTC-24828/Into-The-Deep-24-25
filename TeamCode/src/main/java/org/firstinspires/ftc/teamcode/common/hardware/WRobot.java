@@ -7,16 +7,13 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.AnalogSensor;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.LynxConstants;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -163,13 +160,13 @@ public class WRobot {
     }
 
 
-    public void periodic() {
+    public void update() {
         if (timer.seconds() > 5) {
             timer.reset();
             voltage = hardware_map.voltageSensor.iterator().next().getVoltage();
         }
 
-        for (WSubsystem subsystem : subsystems) { subsystem.periodic(); }
+        for (WSubsystem subsystem : subsystems) { subsystem.update(); }
     }
 
     //read encoder values

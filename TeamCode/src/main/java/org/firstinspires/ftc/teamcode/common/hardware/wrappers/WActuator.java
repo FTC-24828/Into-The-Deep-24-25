@@ -23,7 +23,6 @@ public class WActuator {
     private double target_position = 0.0;
     private double prev_target = 0.0;
     private double current_position = 0.0;
-    private double offset = 0.0;
     private double power = 0.0;
     private double prev_power = 0.0;
 
@@ -54,20 +53,20 @@ public class WActuator {
         if (topic != null) {
             Object value = topic.get();
             if (value instanceof Integer) {
-                this.current_position = (int) value + offset;       //CORRECT???
+                this.current_position = (int) value;
                 return;
             } else if (value instanceof Double) {
-                this.current_position = (double) value + offset;
+                this.current_position = (double) value;
                 return;
             }
         }
 
         for (HardwareDevice device : devices.values()) {
             if (device instanceof WAnalogEncoder) {
-                this.current_position = ((WAnalogEncoder) device).getPosition() + offset;
+                this.current_position = ((WAnalogEncoder) device).getPosition();
                 return;
             } else if (device instanceof WEncoder) {
-                this.current_position = ((WEncoder) device).getPosition() + offset;
+                this.current_position = ((WEncoder) device).getPosition();
                 return;
             }
         }
@@ -98,20 +97,6 @@ public class WActuator {
 
     public void setTargetPosition(double target_position) {
         this.target_position = target_position;
-    }
-
-    /**
-     *
-     * @param offset offset current_position by + offset
-     * @return
-     */
-    public WActuator setReadingOffset(double offset) {
-        this.offset = offset;
-        return this;
-    }
-
-    public double getReadingOffset() {
-        return offset;
     }
 
     public double getCurrentPosition() {
