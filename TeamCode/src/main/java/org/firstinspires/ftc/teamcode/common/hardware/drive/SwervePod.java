@@ -66,9 +66,7 @@ public class SwervePod implements WSubsystem {
         double servo_power = heading_controller.calculate(error);
         if (Math.abs(servo_power) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
             servo_power = 0;
-        if ((Math.abs(servo_power - current_servo_power) > POWER_TOLERANCE
-                || (servo_power == 0 && current_servo_power != 0))
-                && !heading_override) {
+        if (servo_power == 0 && current_servo_power != 0 && !heading_override) {
             servo.setPower(WMath.clamp(servo_power, -1, 1));
             current_servo_power = servo_power;
         }

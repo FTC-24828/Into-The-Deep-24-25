@@ -155,11 +155,10 @@ public class WRobot {
         this.subsystems = new ArrayList<>();
         this.subsystems.addAll(Arrays.asList(subsystems));
         for (WSubsystem subsystem : subsystems) {
-            switch (subsystem.getClass().getSimpleName()) {
-                case "Drivetrain": drivetrain = (Drivetrain) subsystem; break;
-                default:
-                    throw new ClassCastException("Failed to add subsystem.");
-            }
+            if (subsystem instanceof Drivetrain)
+                drivetrain = (Drivetrain) subsystem;
+            else
+                throw new ClassCastException("Failed to add subsystem.");
         }
     }
 
