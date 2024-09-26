@@ -113,11 +113,11 @@ public class SwerveTest extends CommandOpMode {
         telemetry.addData("Frequency", "%.2fhz", 1000000000 / (loop - loop_time));
         telemetry.addLine("------------------------------------------");
         telemetry.addData("index", pod_index);
-        telemetry.addData("heading", Math.toDegrees(robot.drivetrain.current_heading[pod_index]));
+        telemetry.addData("heading", Math.toDegrees(robot.pod[pod_index].current_heading));
         telemetry.addData("target heading", Math.toDegrees(robot.drivetrain.target_heading[pod_index]));
         telemetry.addData("wrap error", robot.pod[pod_index].minError());
         telemetry.addData("servo power", robot.pod[pod_index].getServoPower());
-        telemetry.addData("encoder voltage", "%.5fv", robot.heading_encoder[pod_index].getVoltage());
+        telemetry.addData("encoder voltage", "%.5fv", robot.heading_encoder[pod_index].current_voltage);
         telemetry.addData("encoder position", Math.toDegrees(robot.heading_encoder[pod_index].getPosition()));
         telemetry.addData("override", robot.pod[pod_index].heading_override);
         telemetry.addData("resetting", robot.pod[pod_index].resetting);

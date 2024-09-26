@@ -71,6 +71,11 @@ public class Main extends CommandOpMode {
                 .whenPressed(new InstantCommand(() -> SLOW_MODE = true))
                 .whenReleased(new InstantCommand(() -> SLOW_MODE = false));
 
+        //slow mode
+        controller1.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(new InstantCommand(() -> SLOW_MODE = true))
+                .whenReleased(new InstantCommand(() -> SLOW_MODE = false));
+
         //switch between field-centric and robot-centric
         double_joystick.whenActive(new InstantCommand(() -> {
            if (drive_mode == Global.DriveMode.FIELD) drive_mode = Global.DriveMode.ROBOT;
@@ -99,8 +104,8 @@ public class Main extends CommandOpMode {
         double yaw = WMath.wrapAngle(robot.getYaw() - INITIAL_YAW);
         Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(),
                 (drive_mode == Global.DriveMode.FIELD ? yaw : 0));
-        if (SLOW_MODE) input_vector = input_vector.scale(0.4);
-        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.4 : 1));
+        if (SLOW_MODE) input_vector = input_vector.scale(0.5);
+        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.5 : 1));
 
         super.run();
 
@@ -112,7 +117,6 @@ public class Main extends CommandOpMode {
         telemetry.addData("Timer", "%.0f", timer.seconds());
         telemetry.addData("Frequency", "%.2fhz", 1000000000 / (loop - loop_time));
         telemetry.addData("Voltage", "%.2f", robot.getVoltage());
-        telemetry.addData("Yaw", "%.2f", yaw);
         telemetry.addData("Drive Mode", drive_mode);
 
         if (Global.DEBUG) {
@@ -120,7 +124,6 @@ public class Main extends CommandOpMode {
             telemetry.addData("left y", controller1.getLeftY());
             telemetry.addData("left x", controller1.getLeftX());
             telemetry.addData("right x", controller1.getRightX());
-            telemetry.addData("inactive time", robot.drivetrain.inactive_timer.seconds());
 
             telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].minError() ,
                     robot.pod[1].minError(),

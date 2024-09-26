@@ -9,7 +9,8 @@ import org.firstinspires.ftc.teamcode.common.util.WMath;
 public class WAnalogEncoder implements HardwareDevice {
     public AnalogInput encoder;
     private double max_voltage = 3.3;
-    private double prev_reading = 0;
+    private double prev_reading = 0.0;
+    public double current_voltage = 0.0;
     private double current_position;
     private boolean inverted = false;
     public double offset = 0.0;
@@ -50,7 +51,8 @@ public class WAnalogEncoder implements HardwareDevice {
 
     /**returns the current position of the analog encoder in radians*/
     public double getPosition() {
-        double current_reading = ((!inverted ? getVoltage() : max_voltage - getVoltage()) + offset)
+        getVoltage();
+        double current_reading = ((!inverted ? current_voltage : max_voltage - current_voltage) + offset)
                 / max_voltage * WMath.twoPI;
         double delta = current_reading - prev_reading;
         if (delta > Math.PI) delta -= WMath.twoPI;
@@ -64,7 +66,7 @@ public class WAnalogEncoder implements HardwareDevice {
 
     public void setOffset(double o) { offset = o; }
 
-    public double getVoltage() {return encoder.getVoltage();}
+    public void getVoltage() {current_voltage = encoder.getVoltage();}
 
     public void setInverted(boolean bool) { inverted = bool; }
 }

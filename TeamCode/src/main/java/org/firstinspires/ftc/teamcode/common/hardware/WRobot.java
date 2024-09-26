@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
+import com.outoftheboxrobotics.photoncore.hardware.servo.PhotonCRServo;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -169,7 +171,6 @@ public class WRobot {
         for (WSubsystem subsystem : subsystems) { subsystem.update(); }
     }
 
-    //read encoder values
     public void read () {
         for (WSubsystem subsystem : subsystems) {
             subsystem.read();

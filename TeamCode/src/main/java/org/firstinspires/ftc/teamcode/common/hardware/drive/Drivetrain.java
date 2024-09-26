@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.common.hardware.drive;
 
+import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
+import com.outoftheboxrobotics.photoncore.hardware.servo.PhotonCRServo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -17,7 +19,6 @@ public class Drivetrain implements WSubsystem {
 
     private final double[] target_power = new double[4];
     public double[] target_heading = new double[4];
-    public double[] current_heading = new double[4];
     public double TANGENT_TO_CENTER = Math.PI / 4;
 
     public ElapsedTime inactive_timer;
@@ -73,16 +74,14 @@ public class Drivetrain implements WSubsystem {
     }
 
     public void read() {
-        for (int i=0; i<4; i++) {
-            robot.pod[i].read();
-            current_heading[i] = robot.pod[i].getPodHeading();
-        }
+        for (SwervePod pod : robot.pod)
+            pod.read();
     }
 
     public void update() {
         for (int i=0; i<4; i++) {
-            robot.pod[i].setMotorTargetPower(target_power[i]);
-            robot.pod[i].setTargetHeading(target_heading[i]);
+            robot.pod[i].setTargets(target_power[i], target_heading[i]);
+            robot.pod[i].update();
         }
     }
 

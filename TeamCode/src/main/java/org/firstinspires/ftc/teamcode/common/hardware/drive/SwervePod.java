@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.common.hardware.drive;
 
+import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
+import com.outoftheboxrobotics.photoncore.hardware.servo.PhotonCRServo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
@@ -20,22 +23,25 @@ public class SwervePod implements WSubsystem {
     private WAnalogEncoder encoder;
     private double m_target = 0;
     private double m_current = 0;
+    private double s_target = 0;
     private double s_current = 0;
     private double target_heading = 0;
-    private double current_heading;
+    public double current_heading;
     public boolean heading_override = false;
     public boolean resetting = false;
 
     public PIDF heading_controller;
-    public static double kP = 0.6;
+    public static double kP = 0.1;
     public static double kI = 0;
     public static double kD = 0.01;
     public static double kF = 0;
 
     public double HEADING_TO_SERVO_RATIO = 1.0;
-    public double HEADING_TOLERANCE = 0.02;
-    public double POWER_TOLERANCE = 0.1;
+    public double HEADING_TOLERANCE = 0.025;
+    public double MOTOR_POWER_TOLERANCE = 0.2;
+    public double SERVO_POWER_TOLERANCE = 0.25;
     public double POWER_DEADZONE = 0.05;
+    public double ANGLE_DEADZONE = Math.PI/3;
     public double MAX_MOTOR = 1;
     public double MAX_SERVO = 1;
 
@@ -58,29 +64,37 @@ public class SwervePod implements WSubsystem {
         current_heading = WMath.wrapAngle(encoder.getPosition() * HEADING_TO_SERVO_RATIO);
     }
 
-    public void update() {}
+    public void update() {
+        double error = WMath.wrapAngle(target_heading - current_heading);
+
+        if (Math.abs(error) > Math.PI / 2) {
+            target_heading -= Math.PI;
+            error = WMath.wrapAngle(target_heading - current_heading);
+            m_target *= -1;
+        }
+
+        if (Math.abs(m_target) < POWER_DEADZONE || Math.abs(error) > ANGLE_DEADZONE)
+            m_target = 0;
+
+        s_target = heading_controller.calculate(0.0, error);
+        if (Math.abs(s_target) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
+            s_target = 0;
+    }
 
     public void write() {
-        double error = minError();
-        if (Math.abs(error) > Math.PI/4.0 || Math.abs(m_target) < POWER_DEADZONE) m_target = 0;
-        else m_target *= (Math.abs(WMath.wrapAngle(target_heading - current_heading)) > Math.PI/2 ? -1 : 1);
-        if (Math.abs(m_target - m_current) > POWER_TOLERANCE
+        if (Math.abs(m_target - m_current) > MOTOR_POWER_TOLERANCE / 2
             || (m_target == 0 && m_current != 0)) {
-            if (m_target != 0)
-                m_target = m_current + 0.05 * Math.signum(m_target - m_current);
             motor.setPower(WMath.clamp(m_target, -MAX_MOTOR, MAX_MOTOR));
             m_current = m_target;
         }
 
-
-        double s_target = heading_controller.calculate(0.0, error);
-        if (Math.abs(s_target) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
-            s_target = 0;
-        if ((s_target != 0 || s_current != 0) && !heading_override) {
+        if ((Math.abs(s_target - s_current) > SERVO_POWER_TOLERANCE / 2
+                || (s_target == 0 && s_current != 0))
+                && !heading_override) {
             servo.setPower(WMath.clamp(s_target, -MAX_SERVO, MAX_SERVO));
             s_current = s_target;
         }
-        else if (resetting) resetToZero();
+//        else if (resetting) resetToZero();
     }
 
     public void reset() {
@@ -93,6 +107,11 @@ public class SwervePod implements WSubsystem {
         if (Math.abs(error) <= Math.PI / 2) return error;
         else if (error > Math.PI / 2) return error - Math.PI;
         return error + Math.PI;
+    }
+
+    public void setTargets(double power, double heading) {
+        m_target = power;
+        target_heading = heading;
     }
 
     public void setTargetHeading(double target) {
