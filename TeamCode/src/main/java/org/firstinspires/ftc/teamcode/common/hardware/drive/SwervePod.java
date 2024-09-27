@@ -38,7 +38,8 @@ public class SwervePod implements WSubsystem {
 
     public double HEADING_TO_SERVO_RATIO = 1.0;
     public double HEADING_TOLERANCE = 0.025;
-    public double MOTOR_POWER_TOLERANCE = 0.2;
+    public double MOTOR_POWER_TOLERANCE = 0.1;
+    public double MOTOR_POWER_STEP = 0.1;
     public double SERVO_POWER_TOLERANCE = 0.25;
     public double POWER_DEADZONE = 0.05;
     public double ANGLE_DEADZONE = Math.PI/3;
@@ -73,8 +74,14 @@ public class SwervePod implements WSubsystem {
             m_target *= -1;
         }
 
+        //target power rounding
+        m_target = Math.round(m_target / MOTOR_POWER_TOLERANCE) * MOTOR_POWER_TOLERANCE;
+
         if (Math.abs(m_target) < POWER_DEADZONE || Math.abs(error) > ANGLE_DEADZONE)
             m_target = 0;
+        //motor power slew limiting
+        else if (Math.abs(m_target - m_current) > MOTOR_POWER_TOLERANCE)
+            m_target = m_current + MOTOR_POWER_STEP * Math.signum(m_target - m_current);
 
         s_target = heading_controller.calculate(0.0, error);
         if (Math.abs(s_target) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
@@ -82,13 +89,12 @@ public class SwervePod implements WSubsystem {
     }
 
     public void write() {
-        if (Math.abs(m_target - m_current) > MOTOR_POWER_TOLERANCE / 2
-            || (m_target == 0 && m_current != 0)) {
+        if (m_target != m_current) {
             motor.setPower(WMath.clamp(m_target, -MAX_MOTOR, MAX_MOTOR));
             m_current = m_target;
         }
 
-        if ((Math.abs(s_target - s_current) > SERVO_POWER_TOLERANCE / 2
+        if ((Math.abs(s_target - s_current) > SERVO_POWER_TOLERANCE
                 || (s_target == 0 && s_current != 0))
                 && !heading_override) {
             servo.setPower(WMath.clamp(s_target, -MAX_SERVO, MAX_SERVO));
@@ -131,7 +137,11 @@ public class SwervePod implements WSubsystem {
     }
 
     public double getServoPower() {
-        return servo.getPower();
+        return s_current;
+    }
+
+    public double getMotorPower() {
+        return m_current;
     }
 
     public void setServoPower(double power) {

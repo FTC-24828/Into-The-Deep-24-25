@@ -125,15 +125,20 @@ public class Main extends CommandOpMode {
             telemetry.addData("left x", controller1.getLeftX());
             telemetry.addData("right x", controller1.getRightX());
 
-            telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].minError() ,
-                    robot.pod[1].minError(),
-                    robot.pod[2].minError(),
-                    robot.pod[3].minError());
+            telemetry.addData("motor power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getMotorPower(),
+                    robot.pod[1].getMotorPower(),
+                    robot.pod[2].getMotorPower(),
+                    robot.pod[3].getMotorPower());
 
             telemetry.addData("servo power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getServoPower(),
                     robot.pod[1].getServoPower(),
                     robot.pod[2].getServoPower(),
                     robot.pod[3].getServoPower());
+
+            telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].minError() ,
+                    robot.pod[1].minError(),
+                    robot.pod[2].minError(),
+                    robot.pod[3].minError());
         }
 
         telemetry.update();
