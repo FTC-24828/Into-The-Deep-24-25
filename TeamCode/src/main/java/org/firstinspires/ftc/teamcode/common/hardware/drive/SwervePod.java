@@ -86,6 +86,7 @@ public class SwervePod implements WSubsystem {
         s_target = heading_controller.calculate(0.0, error);
         if (Math.abs(s_target) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
             s_target = 0;
+        else WMath.clamp(s_target, -MAX_SERVO, MAX_SERVO);
     }
 
     public void write() {
@@ -97,7 +98,7 @@ public class SwervePod implements WSubsystem {
         if ((Math.abs(s_target - s_current) > SERVO_POWER_TOLERANCE
                 || (s_target == 0 && s_current != 0))
                 && !heading_override) {
-            servo.setPower(WMath.clamp(s_target, -MAX_SERVO, MAX_SERVO));
+            servo.setPower(s_target);
             s_current = s_target;
         }
 //        else if (resetting) resetToZero();

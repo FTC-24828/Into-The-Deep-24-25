@@ -63,8 +63,8 @@ public class Main extends CommandOpMode {
                 .and(new GamepadButton(controller1, GamepadKeys.Button.RIGHT_STICK_BUTTON))::get));
 
         //reset yaw
-        controller1.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                        .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw()));
+//        controller1.getGamepadButton(GamepadKeys.Button.)
+//                        .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw()));
 
         //slow mode
         controller1.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
@@ -80,7 +80,7 @@ public class Main extends CommandOpMode {
         double_joystick.whenActive(new InstantCommand(() -> {
            if (drive_mode == Global.DriveMode.FIELD) drive_mode = Global.DriveMode.ROBOT;
            else {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                drive_mode = Global.DriveMode.FIELD;
+               drive_mode = Global.DriveMode.FIELD;
                INITIAL_YAW = robot.getYaw();
            }
         }));
@@ -101,6 +101,7 @@ public class Main extends CommandOpMode {
 
         robot.read();
 
+        if (controller1.gamepad.guide)  INITIAL_YAW = robot.getYaw();
         double yaw = WMath.wrapAngle(robot.getYaw() - INITIAL_YAW);
         Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(),
                 (drive_mode == Global.DriveMode.FIELD ? yaw : 0));
@@ -153,6 +154,6 @@ public class Main extends CommandOpMode {
     }
 
     public boolean isEndGame() {
-        return timer.seconds() > 0;
+        return timer.seconds() > 90;
     }
 }
