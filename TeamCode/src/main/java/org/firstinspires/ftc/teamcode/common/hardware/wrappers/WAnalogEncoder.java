@@ -48,6 +48,7 @@ public class WAnalogEncoder implements HardwareDevice {
 
     }
 
+    /**returns the current position of the analog encoder in radians*/
     public double getPosition() {
         double current_reading = ((!inverted ? getVoltage() : max_voltage - getVoltage()) + offset)
                 / max_voltage * WMath.twoPI;
