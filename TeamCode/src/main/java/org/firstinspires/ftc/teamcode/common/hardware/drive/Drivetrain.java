@@ -60,10 +60,10 @@ public class Drivetrain implements WSubsystem {
         encoder[2].setInverted(false);
         encoder[3].setInverted(false);
 
-        encoder[0].setOffset(-1.431);
-        encoder[1].setOffset(-0.923);
-        encoder[2].setOffset(-1.527);
-        encoder[3].setOffset(-0.814);
+        encoder[0].setOffset(-1.190);
+        encoder[1].setOffset(-1.980);
+        encoder[2].setOffset(-1.704);
+        encoder[3].setOffset(-0.167);
 
         normalHeading();
 
@@ -72,7 +72,7 @@ public class Drivetrain implements WSubsystem {
         }
     }
 
-    public void periodic() {
+    public void update() {
         for (int i=0; i<4; i++) {
             robot.pod[i].setTargetPower(target_power[i]);
             robot.pod[i].setTargetHeading(target_heading[i]);

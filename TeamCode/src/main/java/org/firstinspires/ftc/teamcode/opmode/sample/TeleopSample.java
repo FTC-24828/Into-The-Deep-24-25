@@ -70,7 +70,7 @@ public class TeleopSample extends CommandOpMode {
             );
         }
 
-        robot.periodic(); //calculations/writing data to actuators
+        robot.update(); //calculations/writing data to actuators
 
         robot.write(); //write power to actuators (setting power to motors/servos)
         robot.clearBulkCache(Global.Hub.BOTH); //clear cache accordingly to get new read() values

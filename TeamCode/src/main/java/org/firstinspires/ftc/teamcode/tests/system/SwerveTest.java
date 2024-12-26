@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 
-@TeleOp(name = "Swerve test")
+@TeleOp(name = "Swerve test", group = "Test")
 public class SwerveTest extends CommandOpMode {
     //initialize and getting the robot instance (singleton)
     private final WRobot robot = WRobot.getInstance();
@@ -105,8 +105,8 @@ public class SwerveTest extends CommandOpMode {
         }
 
         super.run(); //runs commands scheduled in initialize()
-        robot.periodic(); //calculations/writing data to actuators
-        robot.write(); //write power to actuators (setting power to motors/servos)
+        robot.update(); //calculations/writing data to actuators
+//        robot.write(); //write power to actuators (setting power to motors/servos)
         robot.clearBulkCache(Global.Hub.CONTROL_HUB); //clear cache accordingly to get new read() values
 
         double loop = System.nanoTime();

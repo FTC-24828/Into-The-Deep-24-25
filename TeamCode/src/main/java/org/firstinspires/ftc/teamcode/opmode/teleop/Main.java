@@ -101,7 +101,7 @@ public class Main extends CommandOpMode {
 
         super.run();
 
-        robot.periodic();
+        robot.update();
         robot.write();
         robot.clearBulkCache(Global.Hub.CONTROL_HUB);
 
@@ -114,9 +114,6 @@ public class Main extends CommandOpMode {
 
         if (Global.DEBUG) {
             telemetry.addLine("------------------------------------------");
-            telemetry.addData("left y", controller1.getLeftY());
-            telemetry.addData("left x", controller1.getLeftX());
-            telemetry.addData("right x", controller1.getRightX());
             telemetry.addData("inactive time", robot.drivetrain.inactive_timer.seconds());
 
             telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].wrappedError() ,

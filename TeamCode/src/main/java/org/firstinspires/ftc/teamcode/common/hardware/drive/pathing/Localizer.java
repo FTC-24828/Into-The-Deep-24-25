@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.common.hardware.drive.pathing;
 import com.acmerobotics.dashboard.config.Config;
 
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
+import org.firstinspires.ftc.teamcode.common.hardware.Sensors;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
@@ -16,15 +17,15 @@ public class Localizer {
     private Pose start;
     private Pose pose;
 
-    public static double WHEEL_RADIUS = 0.952;
-    public static double TRACK_WIDTH = 7.1;
-    public static double MIDDLE_OFFSET = 4.563;
-    public static double SIDES_OFFSET = 2;
+    public static double WHEEL_RADIUS = 0.942882;
+    public static double X_OFFSET = 1.45033;
+    public static double Y_OFFSET = -4.48733;
+    public static double THETA_OFFSET = 0.0;
 
-    private DoubleSupplier left, middle, right;
-    private double _left, _middle, _right, _theta = 0.0;
+    private DoubleSupplier x, y;
+    private double _x, _y, _theta = 0.0;
 
-    public double d_left, d_middle, d_right, d_theta;
+    public double dx, dy, dtheta;
 
     double local_dx, local_dy;
 
@@ -34,29 +35,26 @@ public class Localizer {
     }
 
     public void init() {
-//        left = () -> robot.doubleSubscriber(Sensors.Encoder.POD_LEFT);
-//        middle = () -> robot.doubleSubscriber(Sensors.Encoder.POD_MIDDLE);
-//        right = () -> robot.doubleSubscriber(Sensors.Encoder.POD_RIGHT);
+        y = () -> robot.doubleSubscriber(Sensors.POD_Y);
+        x = () -> robot.doubleSubscriber(Sensors.POD_X);
         read();
     }
 
     public void read() {
-        _left = left.getAsDouble();
-        _middle = middle.getAsDouble();
-        _right = right.getAsDouble();
-        _theta = pose.z;
+        _x= x.getAsDouble();
+        _y= y.getAsDouble();
+        _theta = robot.getYaw() + THETA_OFFSET;
     }
 
     public void update() {
-        d_left = ticksToInches(left.getAsDouble() - _left);
-        d_middle = ticksToInches(middle.getAsDouble() - _middle);
-        d_right = ticksToInches(right.getAsDouble() - _right);
+        dx = ticksToInches(x.getAsDouble() - _x);
+        dy = ticksToInches(y.getAsDouble() - _y);
+        pose.z = WMath.wrapAngle(robot.getYaw() + THETA_OFFSET);
+        dtheta = WMath.wrapAngle(pose.z - _theta);
 
-        d_theta = (d_left - d_right) / TRACK_WIDTH;
-        pose.z = WMath.wrapAngle(pose.z + d_theta);
+        local_dx = dx - dtheta * X_OFFSET;
+        local_dy = dy - dtheta * Y_OFFSET;
 
-        local_dx = d_middle - MIDDLE_OFFSET * d_theta;
-        local_dy = (d_left + d_right) * 0.5;
         Vector2D translated = new Vector2D(local_dx, local_dy, -pose.z);
         pose.x += translated.x;
         pose.y += translated.y;
@@ -87,5 +85,9 @@ public class Localizer {
 
     public Pose getPose() {
         return pose;
+    }
+
+    public void setThetaOffset(double o) {
+        THETA_OFFSET = o;
     }
 }

@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -14,6 +15,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.configuration.LynxConstants;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -23,7 +25,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.SwervePod;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Localizer;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WActuator;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
+import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
@@ -44,7 +49,15 @@ public class WRobot {
     public CRServo[] servo = new CRServo[4];
     public WAnalogEncoder[] heading_encoder = new WAnalogEncoder[4];
     public SwervePod[] pod = new SwervePod[4];
+
+    public WEncoder pod_x;
+    public WEncoder pod_y;
     public Localizer localizer;
+
+    //intake
+    public Servo intake_right, intake_left;
+    public Servo claw_pivot, claw;
+    public WActuator intake4B;
 
     private final Object imu_lock = new Object();
     @GuardedBy("imu_lock")
@@ -68,9 +81,9 @@ public class WRobot {
     //subsystems
     private List<WSubsystem> subsystems;
     public Drivetrain drivetrain;
+    public Intake intake;
 
-    public  HashMap<Sensors.Encoder, Object> encoder_readings;
-    public HashMap<Sensors.Sensor, Object> sensor_readings;
+    public  HashMap<Sensors, Object> readings;
 
     //singleton declaration
     public static WRobot getInstance() {
@@ -108,31 +121,48 @@ public class WRobot {
 
         localizer = new Localizer(new Pose());
 
-        encoder_readings = new HashMap<>();
+        readings = new HashMap<>();
 
         //drivetrain
-        motor[0] = hardware_map.get(DcMotorEx.class, "motorFrontLeft");     //  [0]_____[3]
-        motor[1] = hardware_map.get(DcMotorEx.class, "motorRearLeft");      //   |   ^   |
-        motor[2] = hardware_map.get(DcMotorEx.class, "motorRearRight");     //   |   |   |
-        motor[3] = hardware_map.get(DcMotorEx.class, "motorFrontRight");    //  [1]_____[2]
+        if (drivetrain != null) {
+            motor[0] = hardware_map.get(DcMotorEx.class, "motorFrontLeft");     //  [0]_____[3]
+            motor[1] = hardware_map.get(DcMotorEx.class, "motorRearLeft");      //   |   ^   |
+            motor[2] = hardware_map.get(DcMotorEx.class, "motorRearRight");     //   |   |   |
+            motor[3] = hardware_map.get(DcMotorEx.class, "motorFrontRight");    //  [1]_____[2]
 
-        servo[0] = hardware_map.get(CRServo.class, "servoFrontLeft");
-        servo[1] = hardware_map.get(CRServo.class, "servoRearLeft");
-        servo[2] = hardware_map.get(CRServo.class, "servoRearRight");
-        servo[3] = hardware_map.get(CRServo.class, "servoFrontRight");
+            servo[0] = hardware_map.get(CRServo.class, "servoFrontLeft");
+            servo[1] = hardware_map.get(CRServo.class, "servoRearLeft");
+            servo[2] = hardware_map.get(CRServo.class, "servoRearRight");
+            servo[3] = hardware_map.get(CRServo.class, "servoFrontRight");
 
-        heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontLeft"));
-        heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearLeft"));
-        heading_encoder[2] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearRight"));
-        heading_encoder[3] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontRight"));
+            heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontLeft"));
+            heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearLeft"));
+            heading_encoder[2] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearRight"));
+            heading_encoder[3] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontRight"));
 
-        pod[0] = new SwervePod();
-        pod[1] = new SwervePod();
-        pod[2] = new SwervePod();
-        pod[3] = new SwervePod();
+            pod[0] = new SwervePod();
+            pod[1] = new SwervePod();
+            pod[2] = new SwervePod();
+            pod[3] = new SwervePod();
 
-        drivetrain.init(motor, servo, heading_encoder);
-//        localizer.init();
+            pod_y = new WEncoder(new MotorEx(hardware_map, "motorFrontLeft").encoder);
+            pod_x = new WEncoder(new MotorEx(hardware_map, "motorFrontRight").encoder);
+
+            drivetrain.init(motor, servo, heading_encoder);
+            localizer.init();
+        }
+
+//        intake
+        if (intake != null) {
+//            intake_right = hardware_map.get(Servo.class, "intake4BRight");
+//            intake_left = hardware_map.get(Servo.class, "intake4BLeft");
+
+//        claw_pivot = hardware_map.get(ServoEx.class, "");
+//        claw = hardware_map.get(ServoEx.class, "");
+
+            intake4B = new WActuator(intake_right::getPosition, (Servo)intake_left, (Servo)intake_right);
+            intake.init(intake_right, intake_left, claw_pivot, claw);
+        }
 
 
         //lynx hubs
@@ -154,6 +184,7 @@ public class WRobot {
         for (WSubsystem subsystem : subsystems) {
             switch (subsystem.getClass().getSimpleName()) {
                 case "Drivetrain": drivetrain = (Drivetrain) subsystem; break;
+                case "Intake": intake = (Intake) subsystem; break;
                 default:
                     throw new ClassCastException("Failed to add subsystem.");
             }
@@ -161,17 +192,23 @@ public class WRobot {
     }
 
 
-    public void periodic() {
+    public void update() {
         if (timer.seconds() > 5) {
             timer.reset();
             voltage = hardware_map.voltageSensor.iterator().next().getVoltage();
         }
 
-        for (WSubsystem subsystem : subsystems) { subsystem.periodic(); }
+        for (WSubsystem subsystem : subsystems) { subsystem.update(); }
     }
 
     //read encoder values
     public void read () {
+        if (Global.IS_AUTO) {
+            readings.put(Sensors.POD_X, -pod_x.getPosition());
+            readings.put(Sensors.POD_Y, pod_y.getPosition());
+            localizer.update();
+        }
+
         for (WSubsystem subsystem : subsystems) {
             subsystem.read();
         }
@@ -235,10 +272,8 @@ public class WRobot {
                 break;
         }
     }
-
-
-    public double doubleSubscriber(Sensors.Encoder topic) {
-        Object value = encoder_readings.getOrDefault(topic, 0.0);
+    public double doubleSubscriber(Sensors topic) {
+        Object value = readings.getOrDefault(topic, 0.0);
         if (value instanceof Integer) {
             return ((Integer) value).doubleValue();
         } else if (value instanceof Double) {
@@ -248,19 +283,8 @@ public class WRobot {
         }
     }
 
-    public double doubleSubscriber(Sensors.Sensor topic) {
-        Object value = sensor_readings.getOrDefault(topic, 0.0);
-        if (value instanceof Integer) {
-            return ((Integer) value).doubleValue();
-        } else if (value instanceof Double) {
-            return (Double) value;
-        } else {
-            throw new ClassCastException();
-        }
-    }
-
-    public int intSubscriber(Sensors.Encoder topic) {
-        Object value = encoder_readings.getOrDefault(topic, 0.0);
+    public int intSubscriber(Sensors topic) {
+        Object value = readings.getOrDefault(topic, 0.0);
         if (value instanceof Integer) {
             return (Integer) value;
         } else if (value instanceof Double) {
@@ -270,22 +294,7 @@ public class WRobot {
         }
     }
 
-    public int intSubscriber(Sensors.Sensor topic) {
-        Object value = sensor_readings.getOrDefault(topic, 0.0);
-        if (value instanceof Integer) {
-            return (Integer) value;
-        } else if (value instanceof Double) {
-            return ((Double) value).intValue();
-        } else {
-            throw new ClassCastException();
-        }
-    }
-
-    public boolean boolSubscriber(Sensors.Encoder topic) {
-        return (boolean) encoder_readings.getOrDefault(topic, false);
-    }
-
-    public boolean boolSubscriber(Sensors.Sensor topic) {
-        return (boolean) sensor_readings.getOrDefault(topic, false);
+    public boolean boolSubscriber(Sensors topic) {
+        return (boolean) readings.getOrDefault(topic, false);
     }
 }

@@ -48,7 +48,7 @@ public class SwervePod implements WSubsystem {
         current_heading = WMath.wrapAngle(encoder.getPosition() * HEADING_TO_SERVO_RATIO);
     }
 
-    public void periodic() {
+    public void update() {
     }
 
     public void write() {
@@ -59,7 +59,7 @@ public class SwervePod implements WSubsystem {
             || (target_power == 0 && current_motor_power != 0)) {
             if (target_power != 0)
                 target_power = current_motor_power + 0.05 * Math.signum(target_power - current_motor_power);
-            motor.setPower(WMath.clamp(target_power, -0.7, 0.7));
+            motor.setPower(WMath.clamp(target_power, -1, 1));
             current_motor_power = target_power;
         }
 
