@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
+import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WSubsystem;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
@@ -99,6 +100,10 @@ public class Drivetrain implements WSubsystem {
 
     public void move(Vector2D v, double z) {
         move(v.x, v.y, z);
+    }
+
+    public void move(Pose p) {
+        move(p.x, p.y, p.z);
     }
 
     public void move(double x, double y, double z) {

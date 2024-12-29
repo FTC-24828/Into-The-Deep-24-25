@@ -25,12 +25,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.SwervePod;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Localizer;
+import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WActuator;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WSubsystem;
-import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
 import org.firstinspires.ftc.teamcode.common.vision.PropPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -54,10 +55,13 @@ public class WRobot {
     public WEncoder pod_y;
     public Localizer localizer;
 
+    //arm
+    public DcMotorEx arm0, arm1;
+    public WEncoder arm_encoder;
+    public WActuator arm_group;
+
     //intake
-    public Servo intake_right, intake_left;
-    public Servo claw_pivot, claw;
-    public WActuator intake4B;
+    public Servo wrist, claw;
 
     private final Object imu_lock = new Object();
     @GuardedBy("imu_lock")
@@ -82,6 +86,7 @@ public class WRobot {
     private List<WSubsystem> subsystems;
     public Drivetrain drivetrain;
     public Intake intake;
+    public Arm arm;
 
     public  HashMap<Sensors, Object> readings;
 
@@ -102,7 +107,7 @@ public class WRobot {
             imu.initialize(new IMU.Parameters(
                     new RevHubOrientationOnRobot(
                             RevHubOrientationOnRobot.LogoFacingDirection.DOWN,
-                            RevHubOrientationOnRobot.UsbFacingDirection.RIGHT
+                            RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
                     )
             ));
             imu.resetYaw();
@@ -125,28 +130,28 @@ public class WRobot {
 
         //drivetrain
         if (drivetrain != null) {
-            motor[0] = hardware_map.get(DcMotorEx.class, "motorFrontLeft");     //  [0]_____[3]
-            motor[1] = hardware_map.get(DcMotorEx.class, "motorRearLeft");      //   |   ^   |
-            motor[2] = hardware_map.get(DcMotorEx.class, "motorRearRight");     //   |   |   |
-            motor[3] = hardware_map.get(DcMotorEx.class, "motorFrontRight");    //  [1]_____[2]
+            motor[0] = hardware_map.get(DcMotorEx.class, "motor00");    //  [0]_____[3]
+            motor[1] = hardware_map.get(DcMotorEx.class, "motor01");    //   |   ^   |
+            motor[2] = hardware_map.get(DcMotorEx.class, "motor02");    //   |   |   |
+            motor[3] = hardware_map.get(DcMotorEx.class, "motor03");    //  [1]_____[2]
 
-            servo[0] = hardware_map.get(CRServo.class, "servoFrontLeft");
-            servo[1] = hardware_map.get(CRServo.class, "servoRearLeft");
-            servo[2] = hardware_map.get(CRServo.class, "servoRearRight");
-            servo[3] = hardware_map.get(CRServo.class, "servoFrontRight");
+            servo[0] = hardware_map.get(CRServo.class, "servo00");
+            servo[1] = hardware_map.get(CRServo.class, "servo01");
+            servo[2] = hardware_map.get(CRServo.class, "servo02");
+            servo[3] = hardware_map.get(CRServo.class, "servo03");
 
-            heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontLeft"));
-            heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearLeft"));
-            heading_encoder[2] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderRearRight"));
-            heading_encoder[3] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "encoderFrontRight"));
+            heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "analog00"));
+            heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "analog01"));
+            heading_encoder[2] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "analog02"));
+            heading_encoder[3] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "analog03"));
 
             pod[0] = new SwervePod();
             pod[1] = new SwervePod();
             pod[2] = new SwervePod();
             pod[3] = new SwervePod();
 
-            pod_y = new WEncoder(new MotorEx(hardware_map, "motorFrontLeft").encoder);
-            pod_x = new WEncoder(new MotorEx(hardware_map, "motorFrontRight").encoder);
+            pod_y = new WEncoder(new MotorEx(hardware_map, "motor00").encoder);
+            pod_x = new WEncoder(new MotorEx(hardware_map, "motor03").encoder);
 
             drivetrain.init(motor, servo, heading_encoder);
             localizer.init();
@@ -154,16 +159,22 @@ public class WRobot {
 
 //        intake
         if (intake != null) {
-//            intake_right = hardware_map.get(Servo.class, "intake4BRight");
-//            intake_left = hardware_map.get(Servo.class, "intake4BLeft");
+            wrist = hardware_map.get(Servo.class, "servo04");
+            claw = hardware_map.get(Servo.class, "servo05");
 
-//        claw_pivot = hardware_map.get(ServoEx.class, "");
-//        claw = hardware_map.get(ServoEx.class, "");
-
-            intake4B = new WActuator(intake_right::getPosition, (Servo)intake_left, (Servo)intake_right);
-            intake.init(intake_right, intake_left, claw_pivot, claw);
+            intake.init(claw, wrist);
         }
 
+        if (arm != null) {
+            arm0 = hardware_map.get(DcMotorEx.class, "motor10");
+            arm1 = hardware_map.get(DcMotorEx.class, "motor11");
+            arm_encoder = new WEncoder(new MotorEx(hardware_map, "motor01").encoder);
+
+            arm_group = new WActuator(() -> intSubscriber(Sensors.ARM_ENCODER), arm0, arm1);
+            readings.put(Sensors.ARM_ENCODER, 0);
+
+            arm.init(arm0, arm1);
+        }
 
         //lynx hubs
         hubs = hardware_map.getAll(LynxModule.class);
@@ -185,6 +196,7 @@ public class WRobot {
             switch (subsystem.getClass().getSimpleName()) {
                 case "Drivetrain": drivetrain = (Drivetrain) subsystem; break;
                 case "Intake": intake = (Intake) subsystem; break;
+                case "Arm": arm = (Arm) subsystem; break;
                 default:
                     throw new ClassCastException("Failed to add subsystem.");
             }
@@ -203,6 +215,8 @@ public class WRobot {
 
     //read encoder values
     public void read () {
+        if (arm != null) readings.put(Sensors.ARM_ENCODER, arm_encoder.getPosition());
+
         if (Global.IS_AUTO) {
             readings.put(Sensors.POD_X, -pod_x.getPosition());
             readings.put(Sensors.POD_Y, pod_y.getPosition());
@@ -243,10 +257,6 @@ public class WRobot {
             imu_thread.start();
         }
     }
-
-//    public void updateYaw() {
-//        yaw = WMath.wrapAngle(imu.getAngularOrientation().firstAngle - imu_offset);
-//    }
 
     public void resetYaw() {
         imu.resetYaw();
