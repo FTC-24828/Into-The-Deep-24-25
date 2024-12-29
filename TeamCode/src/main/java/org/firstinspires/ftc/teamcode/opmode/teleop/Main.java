@@ -9,6 +9,7 @@ import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.outoftheboxrobotics.photoncore.Photon;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -22,6 +23,8 @@ import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
 
+
+@Photon
 @TeleOp (name = "MainTeleOp")
 public class Main extends CommandOpMode {
     private final WRobot robot = WRobot.getInstance();
@@ -65,11 +68,16 @@ public class Main extends CommandOpMode {
                 .and(new GamepadButton(controller1, GamepadKeys.Button.RIGHT_STICK_BUTTON))::get));
 
         //reset yaw
-        controller1.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                        .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw()));
+//        controller1.getGamepadButton(GamepadKeys.Button.)
+//                        .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw()));
 
         //slow mode
         controller1.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new InstantCommand(() -> SLOW_MODE = true))
+                .whenReleased(new InstantCommand(() -> SLOW_MODE = false));
+
+        //slow mode
+        controller1.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new InstantCommand(() -> SLOW_MODE = true))
                 .whenReleased(new InstantCommand(() -> SLOW_MODE = false));
 
@@ -124,11 +132,12 @@ public class Main extends CommandOpMode {
 
         robot.read();
 
+        if (controller1.gamepad.guide)  INITIAL_YAW = robot.getYaw();
         double yaw = WMath.wrapAngle(robot.getYaw() - INITIAL_YAW);
         Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(),
                 (drive_mode == Global.DriveMode.FIELD ? yaw : 0));
-        if (SLOW_MODE) input_vector = input_vector.scale(0.4);
-        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.4 : 1));
+        if (SLOW_MODE) input_vector = input_vector.scale(0.5);
+        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.5 : 1));
 
         robot.arm.setTargetPower(controller1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)
                 - controller1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
@@ -143,22 +152,31 @@ public class Main extends CommandOpMode {
         telemetry.addData("Timer", "%.0f", timer.seconds());
         telemetry.addData("Frequency", "%.2fhz", 1000000000 / (loop - loop_time));
         telemetry.addData("Voltage", "%.2f", robot.getVoltage());
-        telemetry.addData("Yaw", "%.2f", yaw);
         telemetry.addData("Drive Mode", drive_mode);
 
         if (Global.DEBUG) {
             telemetry.addLine("------------------------------------------");
+            telemetry.addData("left y", controller1.getLeftY());
+            telemetry.addData("left x", controller1.getLeftX());
+            telemetry.addData("right x", controller1.getRightX());
+
             telemetry.addData("inactive time", robot.drivetrain.inactive_timer.seconds());
 
-            telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].wrappedError() ,
-                    robot.pod[1].wrappedError(),
-                    robot.pod[2].wrappedError(),
-                    robot.pod[3].wrappedError());
 
-            telemetry.addData("servo power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getServoPower() ,
+            telemetry.addData("motor power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getMotorPower(),
+                    robot.pod[1].getMotorPower(),
+                    robot.pod[2].getMotorPower(),
+                    robot.pod[3].getMotorPower());
+
+            telemetry.addData("servo power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getServoPower(),
                     robot.pod[1].getServoPower(),
                     robot.pod[2].getServoPower(),
                     robot.pod[3].getServoPower());
+
+            telemetry.addData("errors", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].minError() ,
+                    robot.pod[1].minError(),
+                    robot.pod[2].minError(),
+                    robot.pod[3].minError());
         }
 
         telemetry.update();
@@ -173,6 +191,6 @@ public class Main extends CommandOpMode {
     }
 
     public boolean isEndGame() {
-        return timer.seconds() > 0;
+        return timer.seconds() > 90;
     }
 }

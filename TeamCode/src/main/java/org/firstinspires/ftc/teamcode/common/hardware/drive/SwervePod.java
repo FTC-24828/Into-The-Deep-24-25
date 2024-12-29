@@ -1,8 +1,14 @@
 package org.firstinspires.ftc.teamcode.common.hardware.drive;
 
+import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
+import com.outoftheboxrobotics.photoncore.hardware.servo.PhotonCRServo;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.PwmControl;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.teamcode.common.controllers.PIDF;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
@@ -15,30 +21,41 @@ public class SwervePod implements WSubsystem {
     private DcMotor motor;
     private CRServo servo;
     private WAnalogEncoder encoder;
-    private double target_power = 0;
+    private double m_target = 0;
+    private double m_current = 0;
+    private double s_target = 0;
+    private double s_current = 0;
     private double target_heading = 0;
-    private double prev_target_heading = 0;
-    private double current_motor_power = 0;
-    private double current_servo_power = 0;
-    private double current_heading;
+    public double current_heading;
     public boolean heading_override = false;
     public boolean resetting = false;
 
     public PIDF heading_controller;
-    public static double kP = 0.6;
+    public static double kP = 0.1;
     public static double kI = 0;
     public static double kD = 0.01;
     public static double kF = 0;
 
     public double HEADING_TO_SERVO_RATIO = 1.0;
-    public double HEADING_TOLERANCE = 0.02;
-    public double POWER_TOLERANCE = 0.1;
+    public double HEADING_TOLERANCE = 0.025;
+    public double MOTOR_POWER_TOLERANCE = 0.1;
+    public double MOTOR_POWER_STEP = 0.1;
+    public double SERVO_POWER_TOLERANCE = 0.25;
     public double POWER_DEADZONE = 0.05;
+    public double ANGLE_DEADZONE = Math.PI/3;
+    public double MAX_MOTOR = 1;
+    public double MAX_SERVO = 1;
 
     public void init(DcMotorEx m, CRServo s, WAnalogEncoder e) {
         motor = m;
+        MotorConfigurationType motorConfigurationType = motor.getMotorType().clone();
+        motorConfigurationType.setAchieveableMaxRPMFraction(MAX_MOTOR);
+        motor.setMotorType(motorConfigurationType);
+
         servo = s;
+        ((CRServoImplEx) servo).setPwmRange(new PwmControl.PwmRange(500.0, 2500.0, 5000.0));
         servo.setPower(0);
+
         encoder = e;
         heading_controller = new PIDF(kP, kI, kD, kF);
         resetting = false;
@@ -49,50 +66,67 @@ public class SwervePod implements WSubsystem {
     }
 
     public void update() {
+        double error = WMath.wrapAngle(target_heading - current_heading);
+
+        if (Math.abs(error) > Math.PI / 2) {
+            target_heading -= Math.PI;
+            error = WMath.wrapAngle(target_heading - current_heading);
+            m_target *= -1;
+        }
+
+        //target power rounding
+        m_target = Math.round(m_target / MOTOR_POWER_TOLERANCE) * MOTOR_POWER_TOLERANCE;
+
+        if (Math.abs(m_target) < POWER_DEADZONE || Math.abs(error) > ANGLE_DEADZONE)
+            m_target = 0;
+        //motor power slew limiting
+        else if (Math.abs(m_target - m_current) > MOTOR_POWER_TOLERANCE)
+            m_target = m_current + MOTOR_POWER_STEP * Math.signum(m_target - m_current);
+
+        s_target = heading_controller.calculate(0.0, error);
+        if (Math.abs(s_target) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
+            s_target = 0;
+        else WMath.clamp(s_target, -MAX_SERVO, MAX_SERVO);
     }
 
     public void write() {
-        double error = wrappedError();
-        if (Math.abs(error) > Math.PI/4.0 || Math.abs(target_power) < POWER_DEADZONE) target_power = 0;
-        else target_power *= (Math.abs(WMath.wrapAngle(target_heading - current_heading)) > Math.PI/2 ? -1 : 1);
-        if (Math.abs(target_power - current_motor_power) > POWER_TOLERANCE
-            || (target_power == 0 && current_motor_power != 0)) {
-            if (target_power != 0)
-                target_power = current_motor_power + 0.05 * Math.signum(target_power - current_motor_power);
-            motor.setPower(WMath.clamp(target_power, -1, 1));
-            current_motor_power = target_power;
+        if (m_target != m_current) {
+            motor.setPower(WMath.clamp(m_target, -MAX_MOTOR, MAX_MOTOR));
+            m_current = m_target;
         }
 
-        double servo_power = heading_controller.calculate(error);
-        if (Math.abs(servo_power) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
-            servo_power = 0;
-        if ((Math.abs(servo_power - current_servo_power) > POWER_TOLERANCE
-                || (servo_power == 0 && current_servo_power != 0))
+        if ((Math.abs(s_target - s_current) > SERVO_POWER_TOLERANCE
+                || (s_target == 0 && s_current != 0))
                 && !heading_override) {
-            servo.setPower(WMath.clamp(servo_power, -1, 1));
-            current_servo_power = servo_power;
+            servo.setPower(s_target);
+            s_current = s_target;
         }
-        else if (resetting) resetToZero();
+//        else if (resetting) resetToZero();
     }
 
     public void reset() {
         resetToZero();
-        target_power = 0;
+        m_target = 0;
     }
 
-    public double wrappedError() {
+    public double minError() {
         double error = WMath.wrapAngle(target_heading - current_heading);
         if (Math.abs(error) <= Math.PI / 2) return error;
         else if (error > Math.PI / 2) return error - Math.PI;
         return error + Math.PI;
     }
 
+    public void setTargets(double power, double heading) {
+        m_target = power;
+        target_heading = heading;
+    }
+
     public void setTargetHeading(double target) {
         target_heading = target;
     }
 
-    public void setTargetPower(double target) {
-        target_power = target;
+    public void setMotorTargetPower(double target) {
+        m_target = target;
     }
 
     public double getTargetHeading() {
@@ -104,7 +138,11 @@ public class SwervePod implements WSubsystem {
     }
 
     public double getServoPower() {
-        return servo.getPower();
+        return s_current;
+    }
+
+    public double getMotorPower() {
+        return m_current;
     }
 
     public void setServoPower(double power) {

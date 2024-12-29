@@ -67,7 +67,7 @@ public class PIDF {
         return output;
     }
 
-    /**return and output based on the current state vs the target state*/
+    /**return an output based on the current state vs the target state*/
     public double calculate(double current, double target) {
         if (target != last_target) this.reset(target);
         double error = target - current;

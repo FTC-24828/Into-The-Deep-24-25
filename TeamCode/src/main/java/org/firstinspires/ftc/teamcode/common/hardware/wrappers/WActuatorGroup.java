@@ -11,9 +11,8 @@ import org.firstinspires.ftc.teamcode.common.util.WMath;
 import java.util.HashMap;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-public class WActuator {
+public class WActuatorGroup {
     public final HashMap<String, HardwareDevice> devices = new HashMap<>();
 
     private DoubleSupplier voltage;
@@ -28,7 +27,7 @@ public class WActuator {
 
     private Supplier<Object> topic;
 
-    public WActuator(HardwareDevice... d) {
+    public WActuatorGroup(HardwareDevice... d) {
         this.topic = null;
         int id = 0;
         for (HardwareDevice device : d) {
@@ -37,7 +36,7 @@ public class WActuator {
         read();
     }
 
-    public WActuator(Supplier<Object> topic, HardwareDevice... d) {
+    public WActuatorGroup(Supplier<Object> topic, HardwareDevice... d) {
         this.topic = topic;
         int id = 0;
         for (HardwareDevice device : d) {
@@ -103,7 +102,7 @@ public class WActuator {
         return current_position;
     }
 
-    public WActuator setVoltageSupplier(DoubleSupplier voltage) {
+    public WActuatorGroup setVoltageSupplier(DoubleSupplier voltage) {
         this.voltage = voltage;
         return this;
     }
