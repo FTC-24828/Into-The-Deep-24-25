@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmode.teleop;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.ConditionalCommand;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
@@ -12,9 +13,13 @@ import com.outoftheboxrobotics.photoncore.Photon;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.commands.subsystemcommand.ClawCommand;
+import org.firstinspires.ftc.teamcode.commands.subsystemcommand.WristCommand;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
 
@@ -45,7 +50,7 @@ public class Main extends CommandOpMode {
         Global.USING_IMU = true;
         Global.USING_WEBCAM = false;
 
-        robot.addSubsystem(new Drivetrain());
+        robot.addSubsystem(new Drivetrain(), new Intake(), new Arm());
         robot.init(hardwareMap, telemetry);
 
         if (Global.USING_DASHBOARD) {
@@ -85,6 +90,32 @@ public class Main extends CommandOpMode {
            }
         }));
 
+        controller1.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whenHeld(new ClawCommand(Intake.ClawState.OPEN))
+                .whenReleased(new ClawCommand(Intake.ClawState.CLOSED));
+
+        controller1.getGamepadButton(GamepadKeys.Button.Y)
+                .whenPressed(new ConditionalCommand(
+                        new ConditionalCommand(
+                                new WristCommand(Intake.WristState.UP),
+                                new WristCommand(Intake.WristState.MIDDLE),
+                                () -> robot.intake.wrist_state == Intake.WristState.MIDDLE
+                        ),
+                        new InstantCommand(),
+                        () -> robot.intake.wrist_state != Intake.WristState.UP
+                ));
+
+        controller1.getGamepadButton(GamepadKeys.Button.A)
+                .whenPressed(new ConditionalCommand(
+                        new ConditionalCommand(
+                                new WristCommand(Intake.WristState.DOWN),
+                                new WristCommand(Intake.WristState.MIDDLE),
+                                () -> robot.intake.wrist_state == Intake.WristState.MIDDLE
+                        ),
+                        new InstantCommand(),
+                        () -> robot.intake.wrist_state != Intake.WristState.DOWN
+                ));
+
         while (opModeInInit()) {
             telemetry.addLine("Initialization complete.");
             telemetry.update();
@@ -108,6 +139,9 @@ public class Main extends CommandOpMode {
         if (SLOW_MODE) input_vector = input_vector.scale(0.5);
         robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.5 : 1));
 
+        robot.arm.setTargetPower(controller1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)
+                - controller1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
+
         super.run();
 
         robot.update();
@@ -125,6 +159,9 @@ public class Main extends CommandOpMode {
             telemetry.addData("left y", controller1.getLeftY());
             telemetry.addData("left x", controller1.getLeftX());
             telemetry.addData("right x", controller1.getRightX());
+
+            telemetry.addData("inactive time", robot.drivetrain.inactive_timer.seconds());
+
 
             telemetry.addData("motor power", "%+.2f, %+.2f, %+.2f, %+.2f", robot.pod[0].getMotorPower(),
                     robot.pod[1].getMotorPower(),

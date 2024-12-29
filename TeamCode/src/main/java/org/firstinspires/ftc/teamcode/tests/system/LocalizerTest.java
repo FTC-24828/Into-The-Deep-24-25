@@ -8,13 +8,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
+import org.firstinspires.ftc.teamcode.common.hardware.Sensors;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 
 
-@TeleOp(name = "localizer test", group = "Utility")
+@TeleOp(name = "localizer test", group = "Test")
 public class LocalizerTest extends CommandOpMode {
     //initialize and getting the robot instance (singleton)
     private final WRobot robot = WRobot.getInstance();
@@ -42,6 +43,7 @@ public class LocalizerTest extends CommandOpMode {
         robot.addSubsystem(new Drivetrain());
         robot.init(hardwareMap, telemetry);
         robot.localizer.reset(new Pose());
+        robot.localizer.setThetaOffset(0);
 
         //get controller
         controller = new GamepadEx(gamepad1);
@@ -68,28 +70,27 @@ public class LocalizerTest extends CommandOpMode {
         super.run(); //runs commands scheduled above
 
         //set the drivetrain's motor speed according to controller stick input
-        Vector2D local_vector = new Vector2D(controller.getLeftX(), controller.getLeftY(), 0);
-        local_vector.scale(0.4);
+        Vector2D local_vector = new Vector2D(controller.getLeftY(), -controller.getLeftX(), 0);
+        local_vector = local_vector.scale(0.3);
 
         robot.update(); //calculations/writing data to actuators
 
-        robot.drivetrain.move(local_vector, controller.getRightX() * 0.4);
+        robot.drivetrain.move(local_vector, controller.getRightX() * 0.3);
 
         robot.write(); //write power to actuators (setting power to motors/servos)
-        robot.clearBulkCache(Global.Hub.BOTH); //clear cache accordingly to get new read() values
+        robot.clearBulkCache(Global.Hub.CONTROL_HUB); //clear cache accordingly to get new read() values
 
         telemetry.addData("Voltage", robot.getVoltage());
         telemetry.addData("Pose", robot.localizer.getPose().toString());
         telemetry.addData("yaw", "%.5f", robot.getYaw());
 //        telemetry.addData("yaw offset", robot.imu_offset);
         telemetry.addData("yaw diff", "%.5f", robot.getYaw() - robot.localizer.getPose().z);
-        telemetry.addData("d_theta", "%.5f", robot.localizer.d_theta);
-        telemetry.addData("delta distance", "%.3f, %.3f, %.3f",
-                robot.localizer.d_left, robot.localizer.d_middle, robot.localizer.d_right);
-        telemetry.addData("Encoder readings", "%.2f, %.2f, %.2f");
-//                robot.encoder_readings.get(Sensors.Encoder.POD_LEFT),
-//                robot.encoder_readings.get(Sensors.Encoder.POD_MIDDLE),
-//                robot.encoder_readings.get(Sensors.Encoder.POD_RIGHT));
+        telemetry.addData("d_theta", "%.5f", robot.localizer.dtheta);
+        telemetry.addData("delta distance", "x = %.3f, y = %.3f",
+                robot.localizer.dx, robot.localizer.dy);
+        telemetry.addData("Encoder readings", "x = %.2f, y = %.2f",
+                robot.readings.get(Sensors.POD_X),
+                robot.readings.get(Sensors.POD_Y));
         telemetry.update();
     }
 

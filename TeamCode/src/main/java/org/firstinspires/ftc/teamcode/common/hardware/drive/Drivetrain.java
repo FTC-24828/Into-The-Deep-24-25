@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
+import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WSubsystem;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
@@ -61,10 +62,10 @@ public class Drivetrain implements WSubsystem {
         encoder[2].setInverted(false);
         encoder[3].setInverted(false);
 
-        encoder[0].setOffset(-1.431);
-        encoder[1].setOffset(-0.923);
-        encoder[2].setOffset(-1.527);
-        encoder[3].setOffset(-0.814);
+        encoder[0].setOffset(-1.190);
+        encoder[1].setOffset(-1.980);
+        encoder[2].setOffset(-1.704);
+        encoder[3].setOffset(-0.167);
 
         normalHeading();
 
@@ -76,7 +77,6 @@ public class Drivetrain implements WSubsystem {
     public void read() {
         for (SwervePod pod : robot.pod)
             pod.read();
-    }
 
     public void update() {
         for (int i=0; i<4; i++) {
@@ -98,6 +98,10 @@ public class Drivetrain implements WSubsystem {
 
     public void move(Vector2D v, double z) {
         move(v.x, v.y, z);
+    }
+
+    public void move(Pose p) {
+        move(p.x, p.y, p.z);
     }
 
     public void move(double x, double y, double z) {

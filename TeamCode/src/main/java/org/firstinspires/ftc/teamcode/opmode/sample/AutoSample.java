@@ -68,7 +68,8 @@ public class AutoSample extends CommandOpMode {
         robot.write(); //write power to actuators (setting power to motors/servos)
         robot.clearBulkCache(Global.Hub.BOTH); //clear cache accordingly to get new read() values
 
-        //display data        telemetry.addData("Runtime: ", end_time == 0 ? timer.seconds() : end_time);
+        //display data
+        telemetry.addData("Runtime: ", "%.2f", end_time == 0 ? timer.seconds() : end_time);
         telemetry.update();
     }
 

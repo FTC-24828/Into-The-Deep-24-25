@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.common.util;
 
+import android.annotation.SuppressLint;
+
 public class Vector2D {
         public double x, y;
 
@@ -35,9 +37,21 @@ public class Vector2D {
                 return new Vector2D(x * scalar, y * scalar);
         }
 
+        public Vector2D normalize() {
+                double h = this.magnitude();
+                this.x /= h;
+                this.y /= h;
+                return this;
+        }
+
         public Vector2D clamp(double min, double max) {
                 this.x = WMath.clamp(x, min, max);
                 this.y = WMath.clamp(y, min, max);
                 return this;
+        }
+
+        @SuppressLint("DefaultLocale")
+        public String toString() {
+                return String.format("x: %.2f, y: %.2f", x, y);
         }
 }

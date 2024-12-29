@@ -54,6 +54,7 @@ public class WAnalogEncoder implements HardwareDevice {
         getVoltage();
         double current_reading = ((!inverted ? current_voltage : max_voltage - current_voltage) + offset)
                 / max_voltage * WMath.twoPI;
+      
         double delta = current_reading - prev_reading;
         if (delta > Math.PI) delta -= WMath.twoPI;
         else if (delta < -Math.PI) delta += WMath.twoPI;
