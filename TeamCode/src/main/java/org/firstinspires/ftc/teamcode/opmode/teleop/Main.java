@@ -9,7 +9,6 @@ import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.outoftheboxrobotics.photoncore.Photon;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -24,7 +23,6 @@ import org.firstinspires.ftc.teamcode.common.util.Vector2D;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
 
 
-@Photon
 @TeleOp (name = "MainTeleOp")
 public class Main extends CommandOpMode {
     private final WRobot robot = WRobot.getInstance();

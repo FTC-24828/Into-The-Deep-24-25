@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.common.hardware.drive;
 
-import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
-import com.outoftheboxrobotics.photoncore.hardware.servo.PhotonCRServo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -77,6 +75,7 @@ public class Drivetrain implements WSubsystem {
     public void read() {
         for (SwervePod pod : robot.pod)
             pod.read();
+    }
 
     public void update() {
         for (int i=0; i<4; i++) {

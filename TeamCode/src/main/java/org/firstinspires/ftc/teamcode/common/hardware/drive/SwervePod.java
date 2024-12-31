@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.common.hardware.drive;
 
-import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
-import com.outoftheboxrobotics.photoncore.hardware.servo.PhotonCRServo;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;

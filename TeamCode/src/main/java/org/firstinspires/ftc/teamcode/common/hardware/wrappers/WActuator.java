@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-public class WActuatorGroup {
+public class WActuator {
     public final HashMap<String, HardwareDevice> devices = new HashMap<>();
 
     private DoubleSupplier voltage;
@@ -27,7 +27,7 @@ public class WActuatorGroup {
 
     private Supplier<Object> topic;
 
-    public WActuatorGroup(HardwareDevice... d) {
+    public WActuator(HardwareDevice... d) {
         this.topic = null;
         int id = 0;
         for (HardwareDevice device : d) {
@@ -36,7 +36,7 @@ public class WActuatorGroup {
         read();
     }
 
-    public WActuatorGroup(Supplier<Object> topic, HardwareDevice... d) {
+    public WActuator(Supplier<Object> topic, HardwareDevice... d) {
         this.topic = topic;
         int id = 0;
         for (HardwareDevice device : d) {
@@ -102,7 +102,7 @@ public class WActuatorGroup {
         return current_position;
     }
 
-    public WActuatorGroup setVoltageSupplier(DoubleSupplier voltage) {
+    public WActuator setVoltageSupplier(DoubleSupplier voltage) {
         this.voltage = voltage;
         return this;
     }
