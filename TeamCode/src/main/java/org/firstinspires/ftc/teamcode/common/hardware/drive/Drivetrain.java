@@ -119,10 +119,10 @@ public class Drivetrain implements WSubsystem {
         double sin = Math.sin(TANGENT_TO_CENTER) * z;
 
         Vector2D[] translated_vector = new Vector2D[4];
-        translated_vector[0] = new Vector2D(x + cos, y - sin);      //  [0]_____[3]   +z is cw
-        translated_vector[1] = new Vector2D(x + cos, y + sin);      //   |   ^   |
-        translated_vector[2] = new Vector2D(x - cos, y + sin);      //   |   |   |       +x
-        translated_vector[3] = new Vector2D(x - cos, y - sin);      //  [1]_____[2]   +y__|
+        translated_vector[0] = new Vector2D(x - cos, y + sin);      //  [0]_____[3]   +z is ccw
+        translated_vector[1] = new Vector2D(x - cos, y - sin);      //   |   ^   |
+        translated_vector[2] = new Vector2D(x + cos, y - sin);      //   |   |   |       +x
+        translated_vector[3] = new Vector2D(x + cos, y + sin);      //  [1]_____[2]   +y__|
 
         double max = 1;
         for (Vector2D v : translated_vector)
@@ -134,15 +134,6 @@ public class Drivetrain implements WSubsystem {
             translated_vector[2].scale(translated_vector[2].magnitude() / max);
             translated_vector[3].scale(translated_vector[3].magnitude() / max);
         }
-
-//        if (Global.IS_AUTO) {
-//            double correction = 12 / robot.getVoltage();
-//            for (int i=0; i<target_power.length; i++) {
-//                target_power = Math.abs(wheel_speed[i]) < 0.01 ?
-//                        wheel_speed[i] * correction :
-//                        (wheel_speed[i] + Math.signum(wheel_speed[i]) * 0.05) * correction;
-//            }
-//        }
 
         for (int i=0; i<4; i++) {
             target_power[i] = translated_vector[i].magnitude();

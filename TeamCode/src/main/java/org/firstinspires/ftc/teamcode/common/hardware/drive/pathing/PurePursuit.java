@@ -2,35 +2,37 @@ package org.firstinspires.ftc.teamcode.common.hardware.drive.pathing;
 
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.util.Vector2D;
+import org.firstinspires.ftc.teamcode.common.util.WMath;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PurePursuit {
     private final WRobot robot = WRobot.getInstance();
+    private Localizer localizer = robot.localizer;
 
     //constraints
-    double r, max_vel, max_accel;
+    public double r, max_vel, max_accel;
 
-    List<Path> path = new ArrayList<>();
-    List<Vector2D> intersection = new ArrayList<>();
-    int last_index = -1;
+    public List<Path> path = new ArrayList<>();
+    public List<Vector2D> intersection = new ArrayList<>();
+    public int last_index = -1;
 
-    int current_goal;
-    int end_goal;
-    Pose goal = new Pose();
-    Pose current_position;
+    public int current_goal;
+    public int end_goal;
+    public Pose goal = new Pose();
+    private Pose current_position;
 
     public PurePursuit(double l, double m_vel, double m_accel) {
         r = l;
         max_vel = m_vel;
         max_accel = m_accel;
-        current_position = robot.localizer.getPose();
+        current_position = localizer.getPose();
     }
 
     public Pose calculateGoal(int index) {
         Path p = path.get(index);
-        current_position = robot.localizer.getPose();
+        current_position = localizer.getPose();
 
         //check if we have switched to a different path
         if (last_index != index) {
@@ -40,15 +42,14 @@ public class PurePursuit {
         }
 
         //if the goal point is within the lookahead circle
-        if (ptpDistance(current_position, p.get(current_goal)) < r) current_goal++;
+        if (ptpDistance(current_position, p.get(current_goal)) < r && current_goal != end_goal)
+            current_goal++;
 
-        //check if current_goal is the start of the path
-        if (current_goal == 0)
+        //check if current_goal is the start or end of the path
+        if (current_goal == 0 || current_goal == end_goal)
             goal = p.get(current_goal);
-        else if (current_goal == end_goal + 1)
-            goal = p.get(current_goal-1);
         else {
-            switch (findIntersections(p.get(current_goal), p.get(current_goal-1))) {
+            switch (findIntersections(p.get(current_goal).toVector2D(), p.get(current_goal-1).toVector2D())) {
                 case 1:
                     goal = new Pose(intersection.get(0), p.get(current_goal).z);
                     break;
@@ -75,7 +76,7 @@ public class PurePursuit {
         return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
     }
 
-    private int findIntersections(Pose a, Pose b) {
+    private int findIntersections(Vector2D a, Vector2D b) {
         intersection.clear();
         int point_found = 0;
 
@@ -88,7 +89,7 @@ public class PurePursuit {
         double dx = b.x - a.x;
         double dy = b.y - a.y;
         double dr = ptpDistance(a, b);
-        double det = local_x1 * local_y2 + local_x2 * local_y1;     //determinant
+        double det = local_x1 * local_y2 - local_x2 * local_y1;     //determinant
         double delta = r*r * dr*dr - det*det;                       //discriminant
 
         if (delta < 0) return 0;    //if there is no real solutions
@@ -99,12 +100,12 @@ public class PurePursuit {
         double minY = Math.min(a.y, b.y);
         double maxY = Math.max(a.y, b.y);
 
-        double deltaX = Math.signum(dy) * dx * Math.sqrt(delta);
+        double deltaX = (Math.signum(dy) >= 0 ? 1 : -1) * dx * Math.sqrt(delta);
         double deltaY = Math.abs(dy) * Math.sqrt(delta);
 
         //solution 1
-        double x1 = (dy * det + deltaX) / dr*dr + current_position.x;
-        double y1 = (-dx * det + deltaY) / dr*dr + current_position.y;
+        double x1 = (dy * det + deltaX) / (dr*dr) + current_position.x;
+        double y1 = (-dx * det + deltaY) / (dr*dr) + current_position.y;
 
         //check if solution is on the line segments between end points a and b
         if (minX <= x1 && x1 <= maxX && minY <= y1 && y1 <= maxY) {
@@ -114,8 +115,8 @@ public class PurePursuit {
         if (delta == 0) return point_found;
 
         //solution 2 (if discriminant is not 0)
-        double x2 = (dy * det - deltaX) / dr*dr + current_position.x;
-        double y2 = (-dx * det - deltaY) / dr*dr + current_position.y;
+        double x2 = (dy * det - deltaX) / (dr*dr) + current_position.x;
+        double y2 = (-dx * det - deltaY) / (dr*dr) + current_position.y;
 
         if (minX <= x2 && x2 <= maxX && minY <= y2 && y2 <= maxY) {
             intersection.add(new Vector2D(x2, y2));

@@ -75,7 +75,7 @@ public class LocalizerTest extends CommandOpMode {
 
         robot.update(); //calculations/writing data to actuators
 
-        robot.drivetrain.move(local_vector, controller.getRightX() * 0.3);
+        robot.drivetrain.move(local_vector, -controller.getRightX() * 0.3);
 
         robot.write(); //write power to actuators (setting power to motors/servos)
         robot.clearBulkCache(Global.Hub.CONTROL_HUB); //clear cache accordingly to get new read() values

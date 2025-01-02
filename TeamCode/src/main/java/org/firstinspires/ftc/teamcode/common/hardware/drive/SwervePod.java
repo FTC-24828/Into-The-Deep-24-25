@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.common.hardware.drive;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,11 +10,13 @@ import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.teamcode.common.controllers.PIDF;
+import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WSubsystem;
 import org.firstinspires.ftc.teamcode.common.util.WMath;
 
+@Config
 public class SwervePod implements WSubsystem {
     private final WRobot robot = WRobot.getInstance();
     private DcMotor motor;
@@ -29,18 +32,18 @@ public class SwervePod implements WSubsystem {
     public boolean resetting = false;
 
     public PIDF heading_controller;
-    public static double kP = 0.1;
+    public static double kP = 0.6;
     public static double kI = 0;
-    public static double kD = 0.01;
+    public static double kD = 0.0005;
     public static double kF = 0;
 
     public double HEADING_TO_SERVO_RATIO = 1.0;
-    public double HEADING_TOLERANCE = 0.025;
-    public double MOTOR_POWER_TOLERANCE = 0.1;
+    public double HEADING_TOLERANCE = Math.toRadians(1.25);
+    public double MOTOR_POWER_TOLERANCE = 0.01;
     public double MOTOR_POWER_STEP = 0.1;
-    public double SERVO_POWER_TOLERANCE = 0.25;
-    public double POWER_DEADZONE = 0.05;
-    public double ANGLE_DEADZONE = Math.PI/3;
+    public double SERVO_POWER_TOLERANCE = 0.01;
+    public double POWER_DEADZONE = 0.01;
+    public double ANGLE_DEADZONE = Math.toRadians(45);
     public double MAX_MOTOR = 1;
     public double MAX_SERVO = 1;
 
@@ -66,21 +69,31 @@ public class SwervePod implements WSubsystem {
     public void update() {
         double error = WMath.wrapAngle(target_heading - current_heading);
 
+        //flip direction of motor if pod is rotated in the opposite direction
         if (Math.abs(error) > Math.PI / 2) {
             target_heading -= Math.PI;
             error = WMath.wrapAngle(target_heading - current_heading);
             m_target *= -1;
         }
 
-        //target power rounding
-        m_target = Math.round(m_target / MOTOR_POWER_TOLERANCE) * MOTOR_POWER_TOLERANCE;
+        if (Global.IS_AUTO) {
+            if (Math.abs(m_target - m_current) < MOTOR_POWER_TOLERANCE)
+                m_target = m_current;
+        }
+        else {
+            //target power rounding
+            m_target = Math.round(m_target / MOTOR_POWER_TOLERANCE) * MOTOR_POWER_TOLERANCE;
 
-        if (Math.abs(m_target) < POWER_DEADZONE || Math.abs(error) > ANGLE_DEADZONE)
-            m_target = 0;
-        //motor power slew limiting
-        else if (Math.abs(m_target - m_current) > MOTOR_POWER_TOLERANCE)
-            m_target = m_current + MOTOR_POWER_STEP * Math.signum(m_target - m_current);
+            //limit drifting when pod drastically changes heading
+            if (Math.abs(m_target) < POWER_DEADZONE || Math.abs(error) > ANGLE_DEADZONE)
+                m_target = 0;
 
+                //motor power slew limiting
+            else if (Math.abs(m_target - m_current) > MOTOR_POWER_TOLERANCE)
+                m_target = m_current + MOTOR_POWER_STEP * Math.signum(m_target - m_current);
+        }
+
+        //set servo power
         s_target = heading_controller.calculate(0.0, error);
         if (Math.abs(s_target) < POWER_DEADZONE || Math.abs(error) <= HEADING_TOLERANCE)
             s_target = 0;

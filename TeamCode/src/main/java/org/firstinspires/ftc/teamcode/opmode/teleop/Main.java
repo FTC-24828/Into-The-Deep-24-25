@@ -63,7 +63,7 @@ public class Main extends CommandOpMode {
         //binds
         Trigger double_joystick = new Trigger(
                 (controller1.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
-                .and(new GamepadButton(controller1, GamepadKeys.Button.RIGHT_STICK_BUTTON))::get));
+                        .and(new GamepadButton(controller1, GamepadKeys.Button.RIGHT_STICK_BUTTON))::get));
 
         //reset yaw
 //        controller1.getGamepadButton(GamepadKeys.Button.)
@@ -81,11 +81,11 @@ public class Main extends CommandOpMode {
 
         //switch between field-centric and robot-centric
         double_joystick.whenActive(new InstantCommand(() -> {
-           if (drive_mode == Global.DriveMode.FIELD) drive_mode = Global.DriveMode.ROBOT;
-           else {
-               drive_mode = Global.DriveMode.FIELD;
-               INITIAL_YAW = robot.getYaw();
-           }
+            if (drive_mode == Global.DriveMode.FIELD) drive_mode = Global.DriveMode.ROBOT;
+            else {
+                drive_mode = Global.DriveMode.FIELD;
+                INITIAL_YAW = robot.getYaw();
+            }
         }));
 
         controller1.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
@@ -131,11 +131,13 @@ public class Main extends CommandOpMode {
         robot.read();
 
         if (controller1.gamepad.guide)  INITIAL_YAW = robot.getYaw();
+
         double yaw = WMath.wrapAngle(robot.getYaw() - INITIAL_YAW);
         Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(),
-                (drive_mode == Global.DriveMode.FIELD ? yaw : 0));
-        if (SLOW_MODE) input_vector = input_vector.scale(0.5);
-        robot.drivetrain.move(input_vector, controller1.getRightX() * (SLOW_MODE ? 0.5 : 1));
+                (drive_mode == Global.DriveMode.FIELD ? -yaw : 0));
+        if (SLOW_MODE) input_vector = input_vector.scale(0.3);
+
+        robot.drivetrain.move(input_vector, -controller1.getRightX() * (SLOW_MODE ? 0.3 : 1));
 
         robot.arm.setTargetPower(controller1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)
                 - controller1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
@@ -150,6 +152,7 @@ public class Main extends CommandOpMode {
         telemetry.addData("Timer", "%.0f", timer.seconds());
         telemetry.addData("Frequency", "%.2fhz", 1000000000 / (loop - loop_time));
         telemetry.addData("Voltage", "%.2f", robot.getVoltage());
+        telemetry.addData("Yaw", yaw);
         telemetry.addData("Drive Mode", drive_mode);
 
         if (Global.DEBUG) {

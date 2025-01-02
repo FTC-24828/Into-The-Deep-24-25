@@ -7,6 +7,10 @@ import java.util.List;
 public class Path {
     public List<Pose> pose = new ArrayList<>();
 
+    public Path() {
+
+    }
+
     public Path(Pose... p) {
         Collections.addAll(pose, p);
     }

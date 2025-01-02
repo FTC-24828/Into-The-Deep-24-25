@@ -55,7 +55,7 @@ public class Localizer {
         local_dx = dx - dtheta * X_OFFSET;
         local_dy = dy - dtheta * Y_OFFSET;
 
-        Vector2D translated = new Vector2D(local_dx, local_dy, -pose.z);
+        Vector2D translated = new Vector2D(local_dx, local_dy, pose.z);
         pose.x += translated.x;
         pose.y += translated.y;
         read();
