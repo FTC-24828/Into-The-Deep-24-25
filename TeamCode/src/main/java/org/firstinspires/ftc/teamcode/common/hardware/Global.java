@@ -3,8 +3,7 @@ package org.firstinspires.ftc.teamcode.common.hardware;
 public class Global {
     public enum Hub {CONTROL_HUB, EXPANSION_HUB, BOTH}
     public enum Side {BLUE, RED}
-    public enum PropLocation {LEFT, RIGHT, CENTER}
-    public enum State {SCORING, INTERMEDIATE, INTAKE}
+    public enum State {INTAKE_FRONT, INTAKE_BACK, SPECIMEN_INTAKE, SPECIMEN_SCORING, SAMPLE_SCORING, INIT}
     public enum DriveMode {FIELD, ROBOT}
 
     public static final int TETRIX_MOTOR_TPR = 1440;
@@ -17,7 +16,7 @@ public class Global {
     public static boolean USING_WEBCAM;
     public static boolean DEBUG;
     public static Side SIDE;
-    public static State STATE = State.INTERMEDIATE;
+    public static State STATE;
 
     public static void resetGlobals() {
         USING_DASHBOARD = false; IS_AUTO = false; USING_IMU = false; USING_WEBCAM = false; DEBUG = false; SIDE = null; YAW_OFFSET = 0;

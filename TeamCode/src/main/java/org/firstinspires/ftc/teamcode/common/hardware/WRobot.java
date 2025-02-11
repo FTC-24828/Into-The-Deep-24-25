@@ -59,7 +59,7 @@ public class WRobot {
     //arm
     public DcMotorEx arm0, arm1;
     public WEncoder arm_encoder;
-    public WActuator arm_group;
+    public WActuator arm_actuator;
 
     //intake
     public Servo wrist, claw;
@@ -129,7 +129,6 @@ public class WRobot {
 
         readings = new HashMap<>();
 
-        //drivetrain
         if (drivetrain != null) {
             motor[0] = hardware_map.get(DcMotorEx.class, "motor00");    //  [0]_____[3]
             motor[1] = hardware_map.get(DcMotorEx.class, "motor01");    //   |   ^   |
@@ -158,7 +157,6 @@ public class WRobot {
             localizer.init();
         }
 
-//        intake
         if (intake != null) {
             wrist = hardware_map.get(Servo.class, "servo04");
             claw = hardware_map.get(Servo.class, "servo05");
@@ -171,7 +169,7 @@ public class WRobot {
             arm1 = hardware_map.get(DcMotorEx.class, "motor11");
             arm_encoder = new WEncoder(new MotorEx(hardware_map, "motor01").encoder);
 
-            arm_group = new WActuator(() -> intSubscriber(Sensors.ARM_ENCODER), arm0, arm1);
+            arm_actuator = new WActuator(() -> intSubscriber(Sensors.ARM_ENCODER), arm0, arm1);
             readings.put(Sensors.ARM_ENCODER, 0);
 
             arm.init(arm0, arm1);
@@ -215,7 +213,7 @@ public class WRobot {
     }
 
     public void read () {
-        if (arm != null) readings.put(Sensors.ARM_ENCODER, arm_encoder.getPosition());
+        if (arm != null) readings.put(Sensors.ARM_ENCODER, -arm_encoder.getPosition());
 
         if (Global.IS_AUTO) {
             readings.put(Sensors.POD_X, -pod_x.getPosition());

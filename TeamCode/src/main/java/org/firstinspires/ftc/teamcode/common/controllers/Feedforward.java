@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode.common.controllers;
 
+import com.acmerobotics.dashboard.config.Config;
+
+@Config
 public class Feedforward {
-    private double Kf, current_output;
+    public double Kf, current_output;
 
     public Feedforward(double Kf) {
         this.Kf = Kf;

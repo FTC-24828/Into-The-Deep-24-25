@@ -43,7 +43,7 @@ public class SwervePod implements WSubsystem {
     public double MOTOR_POWER_STEP = 0.1;
     public double SERVO_POWER_TOLERANCE = 0.01;
     public double POWER_DEADZONE = 0.01;
-    public double ANGLE_DEADZONE = Math.toRadians(45);
+    public double ANGLE_DEADZONE = Math.toRadians(60);
     public double MAX_MOTOR = 1;
     public double MAX_SERVO = 1;
 

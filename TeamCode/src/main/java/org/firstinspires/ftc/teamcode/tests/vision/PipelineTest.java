@@ -58,7 +58,7 @@ public class PipelineTest extends LinearOpMode {
                         PropPipeline.filter_range[4] + "," +
                         PropPipeline.filter_range[5]);
             }
-            telemetry.addData("Location", prop_pipeline.getPropLocation());
+//            telemetry.addData("Location", prop_pipeline.getPropLocation());
             telemetry.addData("# of detections", prop_pipeline.getNumberOfDetection());
             telemetry.addData("leftZone", prop_pipeline.left_white);
             telemetry.addData("centerZone", prop_pipeline.center_white);
@@ -70,7 +70,7 @@ public class PipelineTest extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addData("Location", prop_pipeline.getPropLocation());
+//            telemetry.addData("Location", prop_pipeline.getPropLocation());
             telemetry.update();
         }
     }

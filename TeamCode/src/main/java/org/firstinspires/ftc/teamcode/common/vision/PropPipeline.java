@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @Config
 public class PropPipeline implements VisionProcessor, CameraStreamSource {
     private final AtomicReference<Bitmap> last_frame = new AtomicReference<>(Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_565));
-    public Global.PropLocation location;
 
     public int[] blue_range =  {0, 50, 120, 255, 255, 255};
     public int[] red_range = {115, 50, 80, 140, 255, 255};
@@ -96,7 +95,7 @@ public class PropPipeline implements VisionProcessor, CameraStreamSource {
             center_white = getWhiteSum(mask, bounding_box.get(1)) / 1000000;
         }
 
-        setPropLocation(left_white, center_white);
+//        setPropLocation(left_white, center_white);
 
         Bitmap b = Bitmap.createBitmap(final_mat.width(), final_mat.height(), Bitmap.Config.RGB_565);
         Utils.matToBitmap(final_mat, b);
@@ -163,17 +162,17 @@ public class PropPipeline implements VisionProcessor, CameraStreamSource {
         return color.val[0];
     }
 
-    private void setPropLocation(double left, double center) {
-        if (left > threshold) {
-            location = PropLocation.LEFT;
-        } else if (center > threshold) {
-            location = PropLocation.CENTER;
-        } else {
-            location = PropLocation.RIGHT;
-        }
-    }
-
-    public PropLocation getPropLocation () { return location; }
+//    private void setPropLocation(double left, double center) {
+//        if (left > threshold) {
+//            location = PropLocation.LEFT;
+//        } else if (center > threshold) {
+//            location = PropLocation.CENTER;
+//        } else {
+//            location = PropLocation.RIGHT;
+//        }
+//    }
+//
+//    public PropLocation getPropLocation () { return location; }
 
     public int getNumberOfDetection() {
         return bounding_box.size();

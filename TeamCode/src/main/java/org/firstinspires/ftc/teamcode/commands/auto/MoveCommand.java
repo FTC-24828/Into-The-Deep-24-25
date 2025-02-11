@@ -1,10 +1,9 @@
-package org.firstinspires.ftc.teamcode.commands.autocommand;
+package org.firstinspires.ftc.teamcode.commands.auto;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.common.controllers.Feedforward;
 import org.firstinspires.ftc.teamcode.common.controllers.PIDF;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
@@ -33,7 +32,7 @@ public class MoveCommand extends CommandBase {
     public double TRANSLATIONAL_TOLERANCE = 0.5;
     public double HEADING_TOLERANCE = Math.toRadians(1);
 
-    public double MAX_TRANSLATIONAL_POWER = 0.5;
+    public double MAX_TRANSLATIONAL_POWER = 0.55;
     public double MAX_HEADING_POWER = 0.3;
 
     public static PIDF xController = new PIDF(tP, 0.0, tD);

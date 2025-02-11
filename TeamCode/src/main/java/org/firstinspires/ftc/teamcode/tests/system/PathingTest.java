@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.tests.auto;
+package org.firstinspires.ftc.teamcode.tests.system;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -6,22 +6,16 @@ import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.commands.autocommand.MoveCommand;
+import org.firstinspires.ftc.teamcode.commands.auto.MoveCommand;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.PurePursuit;
-import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Spline;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Path;
-import org.firstinspires.ftc.teamcode.common.util.Vector2D;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @TeleOp(name = "pathing test", group = "Test")
 public class PathingTest extends CommandOpMode{
@@ -31,7 +25,7 @@ public class PathingTest extends CommandOpMode{
     private double end_time = 0;
     private double loop_time = 0;
 
-    private Object imu_started;
+    private boolean imu_lock;
 
     private PurePursuit path_controller;
 
@@ -124,8 +118,8 @@ public class PathingTest extends CommandOpMode{
     //called when the play button is pressed
     @Override
     public void run() {
-        if (imu_started == null) {
-            imu_started = new Object();
+        if (!imu_lock) {
+            imu_lock = true;
             robot.startIMUThread(() -> true);
         }
 

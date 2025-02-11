@@ -3,97 +3,83 @@ package org.firstinspires.ftc.teamcode.common.controllers;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class MotionProfile {
-    private final ElapsedTime timer = new ElapsedTime();
-    private final ElapsedTime dt_timer = new ElapsedTime();
-    private double start_time = 0;
 
-    public double max_acceleration, max_deceleration, max_velocity;
-    public double prev_position, velocity, acceleration;
-    public double last_target = 0;
-    public double starting_error = 0;
+    public final ElapsedTime timer = new ElapsedTime();
+
+    public double max_accel, max_decel, max_vel, start, goal, position;
 
     public int state = 0;
 
-    public MotionProfile(double m_accel, double m_decel, double m_vel) {
-        this.max_acceleration = m_accel;
-        this.max_deceleration = m_decel;
-        this.max_velocity = m_vel;
+    public MotionProfile(double m_accel, double m_vel, double m_decel) {
+        this.max_accel = Math.abs(m_accel);
+        this.max_decel = Math.abs(m_decel);
+        this.max_vel = Math.abs(m_vel);
     }
 
     public MotionProfile(double m_accel, double m_vel) {
-        this(m_accel, m_accel, m_vel);
+        this(m_accel, m_vel, m_accel);
     }
 
     public void set(double m_accel, double m_decel, double m_vel) {
-        this.max_acceleration = m_accel;
-        this.max_deceleration = m_decel;
-        this.max_velocity = m_vel;
+        this.max_accel = Math.abs(m_accel);
+        this.max_decel = Math.abs(m_decel);
+        this.max_vel = Math.abs(m_vel);
     }
 
-    public double update(double current, double target, double tolerance) {
-        if (Math.abs(target - last_target) < tolerance)  this.reset(target);
-        double error = target - current;
-        if (starting_error == 0) starting_error = error;
-        if (Math.abs(error) <= tolerance) {
-            reset(0);
-            dt_timer.reset();
-            //return 0;
+    public void update() {
+        double distance = goal - start;
+        double direction = Math.signum(distance) < 0? -1 : 1;
+
+        double accel_t = max_vel / max_accel;
+        double decel_t = max_vel / max_decel;
+
+        double accel_d = 0.5 * max_accel * accel_t * accel_t * direction;
+        double decel_d = max_vel * decel_t * direction
+                - 0.5 * max_decel * decel_t * decel_t * direction;
+        double vel = max_vel;
+
+        //if the distance is not large enough to reach max velocity
+        if (Math.abs(distance) < Math.abs(accel_d + decel_d)) {
+            vel = Math.sqrt(Math.abs(2 * distance * max_accel * max_decel
+                    * (max_accel + max_decel)))
+                    / (max_accel + max_decel);
+            accel_t = vel / max_accel;
+            decel_t = vel / max_decel;
+            accel_d = 0.5 * max_accel * accel_t * accel_t * direction;
+            decel_d = vel * decel_t * direction
+                    - 0.5 * max_decel * decel_t * decel_t * direction;
         }
 
-        if (start_time == 0) start_time = timer.seconds();
-        double elapsed_time = timer.seconds() - start_time;
-        double dt = dt_timer.seconds();
-//        double direction = Math.signum(error);
-//        double theoretical_velocity_max = Math.abs(Math.sqrt(2.0 * starting_error / (1/max_acceleration + 1/max_deceleration)));
-//        double total_time = 2.0 * Math.abs(starting_error) / theoretical_velocity_max;
+        double cruise_d = distance - accel_d - decel_d;
+        double cruise_t = Math.abs(cruise_d) / max_vel;
+        double elapsed_time = timer.seconds();
 
-        double acceleration_t = max_velocity / max_acceleration;
-        double deceleration_t = max_velocity / max_deceleration;
-
-        double acceleration_d = 0.5 * max_acceleration * acceleration_t;
-        double deceleration_d = 0.5 * max_deceleration * deceleration_t;
-
-        velocity = (current - prev_position) / dt;
-        acceleration = 2.0 * (current - prev_position) / (dt * dt);
-
-        //if the error is not large enough to reach max velocity
-        if (error < acceleration_d + deceleration_d) {
-            double theoretical_velocity_max = Math.sqrt(2.0 * Math.abs(starting_error) / (1/max_acceleration + 1/max_deceleration));
-            acceleration_t = theoretical_velocity_max * 1 / max_acceleration;
-            deceleration_t = theoretical_velocity_max * 1 / max_deceleration;
+        if (elapsed_time > accel_t + cruise_t + decel_t) {
+            state = 3;
+            position = goal;
         }
-
-        max_velocity = max_acceleration * acceleration_t;
-
-        double cruise_d = error - 2 * acceleration_d;
-        double cruise_t = cruise_d / max_velocity;
-
-        double total_time = acceleration_t + cruise_t + deceleration_t;
-
-        if (elapsed_time > total_time) {
-            return error;
+        else if (elapsed_time < accel_t) {
+            state = 0;
+            position = start + 0.5 * max_accel * elapsed_time * elapsed_time * direction;
         }
-
-        if (elapsed_time < acceleration_t) {
-            return 0.5 * max_acceleration * acceleration_t * acceleration_t;
-        }
-        else if (elapsed_time < acceleration_t + cruise_t) {
-            acceleration_d = 0.5 * max_acceleration * acceleration_t * acceleration_t;
-            double cruise_time = elapsed_time - acceleration_t;
-            return acceleration_d + max_velocity * cruise_time;
+        else if (elapsed_time < accel_t + cruise_t) {
+            state = 1;
+            double cruise_time = elapsed_time - accel_t;
+            position = start + accel_d + vel * cruise_time * direction;
         }
         else {
-            acceleration_d = 0.5 * max_acceleration * acceleration_t * acceleration_t;
-            cruise_d = max_velocity * cruise_t;
-            double deceleration_time = elapsed_time - acceleration_t - cruise_t;
-            return acceleration_d + cruise_d + max_velocity * deceleration_time -
-                    0.5 * max_acceleration * deceleration_time * deceleration_time;
+            state = 2;
+            double deceleration_time = elapsed_time - accel_t - cruise_t;
+            position = start + accel_d + cruise_d
+                    + vel * deceleration_time * direction
+                    - 0.5 * max_decel * deceleration_time * deceleration_time * direction;
         }
     }
 
-    public void reset(double target) {
-        last_target = target;
-        start_time = 0;
-        starting_error = 0;
+    public void setEndPoints(double s, double g) {
+        start = s;
+        goal = g;
+        state = 0;
+        timer.reset();
     }
 }
