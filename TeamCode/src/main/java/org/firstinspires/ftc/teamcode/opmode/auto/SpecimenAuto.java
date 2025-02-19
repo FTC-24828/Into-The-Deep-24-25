@@ -10,17 +10,25 @@ import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.commands.auto.AutoSpecimenScoreState;
+import org.firstinspires.ftc.teamcode.commands.auto.DelayCommand;
 import org.firstinspires.ftc.teamcode.commands.auto.MoveCommand;
-import org.firstinspires.ftc.teamcode.commands.tele.SpecimenAimSequence;
-import org.firstinspires.ftc.teamcode.commands.tele.SpecimenInSequence;
+import org.firstinspires.ftc.teamcode.commands.auto.SamplePushState;
+import org.firstinspires.ftc.teamcode.commands.state.NeutralState;
+import org.firstinspires.ftc.teamcode.commands.state.SampleIntakeState;
+import org.firstinspires.ftc.teamcode.commands.state.SpecimenIntakeState;
+import org.firstinspires.ftc.teamcode.commands.state.SpecimenScoreState;
+import org.firstinspires.ftc.teamcode.commands.subsystem.DepositClawCommand;
+import org.firstinspires.ftc.teamcode.commands.subsystem.DepositExtensionSetState;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Path;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.PurePursuit;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Deposit;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Extension;
 
 @Autonomous(name = "Specimen Auto")
 public class SpecimenAuto extends CommandOpMode {
@@ -46,78 +54,56 @@ public class SpecimenAuto extends CommandOpMode {
         Global.SIDE = Global.Side.RED;
 
         //initialize robot
-        robot.addSubsystem(new Drivetrain(), new Arm(), new Intake());
+        robot.addSubsystem(new Drivetrain(), new Extension(), new Intake(), new Deposit());
         robot.init(hardwareMap, telemetry);
-        Global.setState(Global.State.INIT);
-        robot.intake.setClawState(Intake.ClawState.CLOSED);
-        robot.read();
+        super.schedule(
+                new AutoSpecimenScoreState(),
+                new DepositClawCommand(Deposit.ClawState.CLOSED)
+        );
+        super.run();
+        robot.deposit.update();
+        robot.deposit.write();
 
         robot.localizer.reset(new Pose(0, 0, 0));
-        robot.arm.setArmOffset(0);
 
         if (Global.USING_DASHBOARD) telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         Path scoring_path1 = new Path(
-                new Pose(33.5, 12, 0)
-        );
-
-        Path push_path = new Path(
-                //1st sample
-                new Pose(10, 0, 0),
-                new Pose(10, -20, 0),
-                new Pose(60, -25, 0),
-                new Pose(50, -35, 0),
-                new Pose(3, -30, 0),
-
-                //2nd sample
-                new Pose(60, -35, 0),
-                new Pose(50, -40, 0),
-                new Pose(3, -43, 0),
-
-//                //3rd sample
-//                new Pose(60, -40, 0),
-//                new Pose(50, -48, 0),
-//                new Pose(3, -45, 0),
-
-                //specimen pickup
-                new Pose(30, -10, Math.PI),
-                new Pose(7, -20, Math.PI)
+                new Pose(35.5, 12, 0)
         );
 
         Path scoring_path2 = new Path(
                 new Pose(10, 14, 0),
-                new Pose(33.5, 14, 0)
+                new Pose(35.5, 14, 0)
         );
 
         Path scoring_path3 = new Path(
                 new Pose(10, 16, 0),
-                new Pose(33.5, 16, 0)
+                new Pose(35.5, 16, 0)
         );
 
         Path scoring_path4 = new Path(
                 new Pose(10, 18, 0),
-                new Pose(34, 18, 0)
+                new Pose(35.5, 18, 0)
         );
 
         Path scoring_path5 = new Path(
                 new Pose(10, 20, 0),
-                new Pose(34, 20, 0)
+                new Pose(35.5, 20, 0)
         );
 
         Path intaking_path = new Path(
-                new Pose(10, -10, Math.PI * 0.8),
-                new Pose(30, -20, Math.PI),
-                new Pose(7, -20, Math.PI)
+                new Pose(30, -20, 0),
+                new Pose(7, -20, 0)
         );
 
         path_controller = new PurePursuit(10, 0, 0);
-        path_controller.add(scoring_path1);
-        path_controller.add(push_path);
-        path_controller.add(intaking_path);
-        path_controller.add(scoring_path2);
-        path_controller.add(scoring_path3);
-        path_controller.add(scoring_path4);
-        path_controller.add(scoring_path5);
+        path_controller.add(intaking_path); //0
+        path_controller.add(scoring_path1); //1
+        path_controller.add(scoring_path2); //2
+        path_controller.add(scoring_path3); //3
+        path_controller.add(scoring_path4); //4
+        path_controller.add(scoring_path5); //5
 
         while (!isStarted()) {
             double loop = System.nanoTime();
@@ -125,6 +111,8 @@ public class SpecimenAuto extends CommandOpMode {
             telemetry.addData("Frequency", 0);
             telemetry.addData("Heading: ", "%.2f", robot.getYaw());
             telemetry.addData("Goal index", path_controller.last_index);
+            telemetry.addData("Deposit state", robot.deposit.getState());
+            telemetry.addData("Deposit wrist state", robot.deposit.wrist_state);
             telemetry.update();
             loop_time = loop;
         }
@@ -133,42 +121,85 @@ public class SpecimenAuto extends CommandOpMode {
                 new SequentialCommandGroup(
                         new InstantCommand(timer::reset),
 
+                        new AutoSpecimenScoreState(),
+
                         //pre-load specimen
-                        new SpecimenAimSequence(),
-                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
-                        new SpecimenInSequence(),
+                        new MoveCommand(() -> path_controller.calculateGoal(1), 2600)
+                                .alongWith(new DelayCommand(new SpecimenScoreState(), 500)),
+                        new WaitCommand(200),
+                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+                        new WaitCommand(300),
+                        new DepositClawCommand(Deposit.ClawState.OPEN),
+                        new WaitCommand(250),
+                        new NeutralState(),
 
-                        new WaitCommand(400),
+                        //push 1st sample
+                        new MoveCommand(() -> new Pose(10, -20, Math.toRadians(-50)), 1500)
+                                .alongWith(new DelayCommand(new SamplePushState(1), 800)),
+                        new WaitCommand(700),
+                        new MoveCommand(() -> new Pose(10, -20, Math.toRadians(-120)), 1500),
+                        new SampleIntakeState(),
 
-                        //push all the samples
-                        new MoveCommand(() -> path_controller.calculateGoal(1), 13500),
+                        //push 2nd sample
+                        new MoveCommand(() -> new Pose(10, -35, Math.toRadians(-50)), 1500)
+                                .alongWith(new DelayCommand(new SamplePushState(1), 800)),
+                        new WaitCommand(700),
+                        new MoveCommand(() -> new Pose(10, -35, Math.toRadians(-120)), 1500),
+                        new SampleIntakeState(),
+
+                        //push 3st sample
+                        new MoveCommand(() -> new Pose(10, -50, Math.toRadians(-50)), 1500)
+                                .alongWith(new DelayCommand(new SamplePushState(1), 800)),
+                        new WaitCommand(700),
+                        new MoveCommand(() -> new Pose(10, -50, Math.toRadians(-120)), 1500),
+                        new SampleIntakeState(),
 
                         //2nd specimen
-                        new WaitCommand(200),
-                        new SpecimenAimSequence(),
-                        new MoveCommand(() -> path_controller.calculateGoal(3), 2600),
-                        new SpecimenInSequence(),
-
-                        //3rd specimen
-                        new MoveCommand(() -> path_controller.calculateGoal(2), 2800),
-                        new SpecimenAimSequence(),
-                        new MoveCommand(() -> path_controller.calculateGoal(4), 2600),
-                        new SpecimenInSequence(),
-
-                        //4th specimen
-                        new MoveCommand(() -> path_controller.calculateGoal(2), 2800),
-                        new SpecimenAimSequence(),
-                        new MoveCommand(() -> path_controller.calculateGoal(5), 2600),
-                        new SpecimenInSequence(),
+                        new SpecimenIntakeState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
+//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+//                        new WaitCommand(250),
+//                        new SpecimenScoreState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(2), 2600),
+//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+//                        new WaitCommand(250),
+//                        new DepositClawCommand(Deposit.ClawState.OPEN),
+//
+//                        //3rd specimen
+//                        new SpecimenIntakeState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
+//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+//                        new WaitCommand(250),
+//                        new SpecimenScoreState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(3), 2600),
+//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+//                        new WaitCommand(250),
+//                        new DepositClawCommand(Deposit.ClawState.OPEN),
+//
+//                        //4th specimen
+//                        new SpecimenIntakeState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
+//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+//                        new WaitCommand(250),
+//                        new SpecimenScoreState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(4), 2600),
+//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+//                        new WaitCommand(250),
+//                        new DepositClawCommand(Deposit.ClawState.OPEN),
 //
 //                        //5th specimen
-//                        new MoveCommand(() -> path_controller.calculateGoal(2)),
-//                        new SpecimenAimSequence(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(6)),
-//                        new SpecimenInSequence(),
+//                        new SpecimenIntakeState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
+//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+//                        new WaitCommand(250),
+//                        new SpecimenScoreState(),
+//                        new MoveCommand(() -> path_controller.calculateGoal(5), 2600),
+//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+//                        new WaitCommand(250),
+//                        new DepositClawCommand(Deposit.ClawState.OPEN),
 
                         //observation zone park
-                        new MoveCommand(() -> new Pose(2, -30, 0)),
+//                        new MoveCommand(() -> new Pose(2, -50, 0)),
 
                         new InstantCommand(() -> end_time = timer.seconds())
 
@@ -198,9 +229,9 @@ public class SpecimenAuto extends CommandOpMode {
                 robot.localizer.getPose().z
         );
         telemetry.addData("Goal point", "x=%.2f, y=%.2f, z=%.2f",
-                path_controller.goal.x,
-                path_controller.goal.y,
-                path_controller.goal.z
+                MoveCommand.target_pose.x,
+                MoveCommand.target_pose.y,
+                MoveCommand.target_pose.z
         );
         telemetry.addData("Goal index", path_controller.last_index);
         telemetry.update();

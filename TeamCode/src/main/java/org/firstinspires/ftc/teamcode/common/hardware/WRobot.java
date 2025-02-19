@@ -23,12 +23,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.SwervePod;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Localizer;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Arm;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Deposit;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Extension;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WActuator;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WAnalogEncoder;
 import org.firstinspires.ftc.teamcode.common.hardware.wrappers.WEncoder;
@@ -56,13 +58,17 @@ public class WRobot {
     public WEncoder pod_y;
     public Localizer localizer;
 
-    //arm
-    public DcMotorEx arm0, arm1;
-    public WEncoder arm_encoder;
-    public WActuator arm_actuator;
+    //slides
+    public DcMotorEx[] extension_motor = new DcMotorEx[2];
+    public WEncoder deposit_encoder;
+    public WActuator intake_extension, deposit_extension;
 
     //intake
-    public Servo wrist, claw;
+    public Servo bar0, bar1, intake_wrist, intake_pivot, intake_claw;
+    public WActuator four_bar;
+
+    //deposit
+    public Servo deposit_crane, deposit_wrist, deposit_claw;
 
     private final Object imu_lock = new Object();
     @GuardedBy("imu_lock")
@@ -87,7 +93,8 @@ public class WRobot {
     private List<WSubsystem> subsystems;
     public Drivetrain drivetrain;
     public Intake intake;
-    public Arm arm;
+    public Extension extension;
+    public Deposit deposit;
 
     public  HashMap<Sensors, Object> readings;
 
@@ -150,29 +157,45 @@ public class WRobot {
             pod[2] = new SwervePod();
             pod[3] = new SwervePod();
 
-            pod_y = new WEncoder(new MotorEx(hardware_map, "motor00").encoder);
-            pod_x = new WEncoder(new MotorEx(hardware_map, "motor03").encoder);
+            pod_x = new WEncoder(new MotorEx(hardware_map, "motor00").encoder);
+            pod_y = new WEncoder(new MotorEx(hardware_map, "motor03").encoder);
 
             drivetrain.init(motor, servo, heading_encoder);
             localizer.init();
         }
 
-        if (intake != null) {
-            wrist = hardware_map.get(Servo.class, "servo04");
-            claw = hardware_map.get(Servo.class, "servo05");
+        if (extension != null) {
+            extension_motor[0] = hardware_map.get(DcMotorEx.class, "motor10");
+            extension_motor[1] = hardware_map.get(DcMotorEx.class, "motor11");
+            deposit_encoder = new WEncoder(new MotorEx(hardware_map, "motor02").encoder);
 
-            intake.init(claw, wrist);
+            intake_extension = new WActuator(extension_motor[0]);
+//            intake_extension.setVoltageSupplier(() -> voltage);
+            deposit_extension = new WActuator(extension_motor[1]);
+            readings.put(Sensors.DEPOSIT_ENCODER, 0);
+            readings.put(Sensors.INTAKE_ENCODER, 0);
+
+            extension.init(extension_motor);
         }
 
-        if (arm != null) {
-            arm0 = hardware_map.get(DcMotorEx.class, "motor10");
-            arm1 = hardware_map.get(DcMotorEx.class, "motor11");
-            arm_encoder = new WEncoder(new MotorEx(hardware_map, "motor01").encoder);
+        if (intake != null) {
+            bar0 = hardware_map.get(Servo.class, "servo13");
+            bar1 = hardware_map.get(Servo.class, "servo14");
+            intake_wrist = hardware_map.get(Servo.class, "servo15");
+            intake_pivot = hardware_map.get(Servo.class, "servo04");
+            intake_claw = hardware_map.get(Servo.class, "servo05");
 
-            arm_actuator = new WActuator(() -> intSubscriber(Sensors.ARM_ENCODER), arm0, arm1);
-            readings.put(Sensors.ARM_ENCODER, 0);
+            four_bar = new WActuator(bar0, bar1);
 
-            arm.init(arm0, arm1);
+            intake.init(bar0, bar1, intake_wrist, intake_pivot, intake_claw);
+        }
+
+        if (deposit != null) {
+            deposit_crane = hardware_map.get(Servo.class, "servo10");
+            deposit_wrist = hardware_map.get(Servo.class, "servo11");
+            deposit_claw = hardware_map.get(Servo.class, "servo12");
+
+            deposit.init(deposit_crane, deposit_wrist, deposit_claw);
         }
 
         //lynx hubs
@@ -195,7 +218,8 @@ public class WRobot {
             switch (subsystem.getClass().getSimpleName()) {
                 case "Drivetrain": drivetrain = (Drivetrain) subsystem; break;
                 case "Intake": intake = (Intake) subsystem; break;
-                case "Arm": arm = (Arm) subsystem; break;
+                case "Extension": extension = (Extension) subsystem; break;
+                case "Deposit": deposit = (Deposit) subsystem; break;
                 default:
                     throw new ClassCastException("Failed to add subsystem.");
             }
@@ -204,19 +228,22 @@ public class WRobot {
 
 
     public void update() {
+        for (WSubsystem subsystem : subsystems) { subsystem.update(); }
+    }
+
+    public void read () {
         if (timer.seconds() > 5) {
             timer.reset();
             voltage = hardware_map.voltageSensor.iterator().next().getVoltage();
         }
 
-        for (WSubsystem subsystem : subsystems) { subsystem.update(); }
-    }
-
-    public void read () {
-        if (arm != null) readings.put(Sensors.ARM_ENCODER, -arm_encoder.getPosition());
+        if (extension != null) {
+//            readings.put(Sensors.INTAKE_ENCODER, intake_encoder.getPosition());
+            readings.put(Sensors.DEPOSIT_ENCODER, -deposit_encoder.getPosition());
+        }
 
         if (Global.IS_AUTO) {
-            readings.put(Sensors.POD_X, -pod_x.getPosition());
+            readings.put(Sensors.POD_X, pod_x.getPosition());
             readings.put(Sensors.POD_Y, pod_y.getPosition());
             localizer.update();
         }
@@ -239,9 +266,7 @@ public class WRobot {
         drivetrain = null;
     }
 
-    public double getVoltage() {
-        return voltage;
-    }
+    public double getVoltage() { return voltage; }
 
     public void startIMUThread(BooleanSupplier predicate) {
         if (Global.USING_IMU) {
@@ -256,13 +281,9 @@ public class WRobot {
         }
     }
 
-    public void resetYaw() {
-        imu.resetYaw();
-    }
+    public void resetYaw() { imu.resetYaw(); }
 
-    public double getYaw() {
-        return yaw;
-    }
+    public double getYaw() { return yaw; }
 
     public void clearBulkCache(@NonNull Global.Hub hub) {
         switch (hub) {
@@ -280,6 +301,7 @@ public class WRobot {
                 break;
         }
     }
+
     public double doubleSubscriber(Sensors topic) {
         Object value = readings.getOrDefault(topic, 0.0);
         if (value instanceof Integer) {

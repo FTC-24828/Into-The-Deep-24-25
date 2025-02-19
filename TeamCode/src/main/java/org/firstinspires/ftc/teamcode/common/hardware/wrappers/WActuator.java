@@ -19,10 +19,10 @@ public class WActuator {
     public ElapsedTime timer;
     private WRobot robot = WRobot.getInstance();
 
-    private double target_position = 0.0;
-    private double prev_target = 0.0;
+    public double target_position = 0.0;
+    private double prev_target = 10E5;
     private double current_position = 0.0;
-    private double power = 0.0;
+    public double power = 0.0;
     private double prev_power = 0.0;
 
     private Supplier<Object> topic;

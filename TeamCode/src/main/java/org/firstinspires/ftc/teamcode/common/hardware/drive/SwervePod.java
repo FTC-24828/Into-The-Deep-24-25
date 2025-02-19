@@ -40,7 +40,8 @@ public class SwervePod implements WSubsystem {
     public double HEADING_TO_SERVO_RATIO = 1.0;
     public double HEADING_TOLERANCE = Math.toRadians(1.25);
     public double MOTOR_POWER_TOLERANCE = 0.01;
-    public double MOTOR_POWER_STEP = 0.1;
+    public double MOTOR_POWER_STEP = 0.2;
+    public double MOTOR_POWER_STEP_AUTO = 0.1;
     public double SERVO_POWER_TOLERANCE = 0.01;
     public double POWER_DEADZONE = 0.01;
     public double ANGLE_DEADZONE = Math.toRadians(60);
@@ -92,6 +93,7 @@ public class SwervePod implements WSubsystem {
             else if (Math.abs(m_target - m_current) > MOTOR_POWER_TOLERANCE)
                 m_target = m_current + MOTOR_POWER_STEP * Math.signum(m_target - m_current);
         }
+
 
         //set servo power
         s_target = heading_controller.calculate(0.0, error);

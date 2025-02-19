@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Pose;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.PurePursuit;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.pathing.Path;
+import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Extension;
 
 @TeleOp(name = "pathing test", group = "Test")
 public class PathingTest extends CommandOpMode{
@@ -40,7 +41,7 @@ public class PathingTest extends CommandOpMode{
         Global.DEBUG = true;
         Global.USING_DASHBOARD = true;
 
-        robot.addSubsystem(new Drivetrain());
+        robot.addSubsystem(new Drivetrain(), new Extension());
         robot.init(hardwareMap, telemetry);
 
         if (Global.USING_DASHBOARD) telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -93,20 +94,20 @@ public class PathingTest extends CommandOpMode{
                 new SequentialCommandGroup(
                         new InstantCommand(timer::reset),
 
-//                        //translation test
-//                        new MoveCommand(new Pose(50, 10, 0), 7000),
-//                        new MoveCommand(new Pose(0, 0, 0), 7000),
-//
-//                        //rotation test
+                        //translation test
+                        new MoveCommand(new Pose(50, 10, 0), 7000),
+                        new MoveCommand(new Pose(0, 0, 0), 7000),
+
+                        //rotation test
 //                        new MoveCommand(new Pose(0, 0, -Math.PI/2), 5000),
 //                        new MoveCommand(new Pose(0, 0, 0), 5000),
-//
-//                        //combined test
+
+                        //combined test
 //                        new MoveCommand(new Pose(50, 10, Math.PI/2), 8000),
 //                        new MoveCommand(new Pose(0, 0, 0), 8000),
 
                         //path test
-                        new MoveCommand(() -> path_controller.calculateGoal(0)),
+//                        new MoveCommand(() -> path_controller.calculateGoal(0)),
 
 
                         new InstantCommand(() -> end_time = timer.seconds())

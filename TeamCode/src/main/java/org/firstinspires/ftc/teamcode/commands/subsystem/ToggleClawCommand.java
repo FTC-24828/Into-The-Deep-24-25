@@ -1,17 +1,16 @@
 package org.firstinspires.ftc.teamcode.commands.subsystem;
 
-import com.arcrobotics.ftclib.command.ConditionalCommand;
 import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
-import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 
-public class ToggleClawCommand extends ConditionalCommand{
+public class ToggleClawCommand extends SequentialCommandGroup {
     public ToggleClawCommand() {
-        super(
-               new ClawCommand(Intake.ClawState.OPEN),
-               new ClawCommand(Intake.ClawState.CLOSED),
-               () -> WRobot.getInstance().intake.claw_state == Intake.ClawState.CLOSED
+        super(new InstantCommand(() -> {
+                   WRobot.getInstance().intake.toggleClawState();
+                   WRobot.getInstance().deposit.toggleClawState();
+               })
         );
     }
 }

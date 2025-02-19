@@ -92,7 +92,7 @@ public class PurePursuit {
         double det = local_x1 * local_y2 - local_x2 * local_y1;     //determinant
         double delta = r*r * dr*dr - det*det;                       //discriminant
 
-        if (delta < 0) return 0;    //if there is no real solutions
+        if (delta < 0) return 0;    //if there is no real solution
 
         //bounds on solutions
         double minX = Math.min(a.x, b.x);

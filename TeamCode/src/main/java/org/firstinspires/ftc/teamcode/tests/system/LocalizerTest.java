@@ -88,7 +88,7 @@ public class LocalizerTest extends CommandOpMode {
         telemetry.addData("d_theta", "%.5f", robot.localizer.dtheta);
         telemetry.addData("delta distance", "x = %.3f, y = %.3f",
                 robot.localizer.dx, robot.localizer.dy);
-        telemetry.addData("Encoder readings", "x = %.2f, y = %.2f",
+        telemetry.addData("Encoder readings", "x = %d, y = %d",
                 robot.readings.get(Sensors.POD_X),
                 robot.readings.get(Sensors.POD_Y));
         telemetry.update();

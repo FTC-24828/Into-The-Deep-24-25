@@ -10,8 +10,7 @@ public class WEncoder implements HardwareDevice {
         this.encoder = encoder;
     }
 
-
-    public double getPosition() {
+    public int getPosition() {
         return this.encoder.getPosition();
     }
 

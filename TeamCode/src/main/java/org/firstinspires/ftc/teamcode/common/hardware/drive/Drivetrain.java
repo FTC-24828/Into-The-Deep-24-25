@@ -18,13 +18,15 @@ public class Drivetrain implements WSubsystem {
 
     private final double[] target_power = new double[4];
     public double[] target_heading = new double[4];
-    public double TANGENT_TO_CENTER = Math.PI / 4;
+    public double BASE_WIDTH = 13.25;
+    public double BASE_LENGTH = 12.50;
+    public double TANGENT_TO_CENTER = Math.atan(BASE_LENGTH/BASE_WIDTH);
 
     public ElapsedTime inactive_timer;
 
     public void init (DcMotorEx[] motor, CRServo[] servo, WAnalogEncoder[] encoder) {
-//      set drivetrain properties
 
+//      set drivetrain properties
         motor[0].setDirection(DcMotorSimple.Direction.REVERSE);
         motor[1].setDirection(DcMotorSimple.Direction.REVERSE);
         motor[2].setDirection(DcMotorSimple.Direction.FORWARD);
@@ -60,10 +62,10 @@ public class Drivetrain implements WSubsystem {
         encoder[2].setInverted(false);
         encoder[3].setInverted(false);
 
-        encoder[0].setOffset(-1.190);
-        encoder[1].setOffset(-1.980);
-        encoder[2].setOffset(-1.704);
-        encoder[3].setOffset(-0.167);
+        encoder[0].setOffset(-0.299);
+        encoder[1].setOffset(-1.077);
+        encoder[2].setOffset(-2.969);
+        encoder[3].setOffset(-1.989);
 
         normalHeading();
 
@@ -95,20 +97,14 @@ public class Drivetrain implements WSubsystem {
             pod.reset();
     }
 
-    public void move(Vector2D v, double z) {
-        move(v.x, v.y, z);
-    }
+    public void move(Vector2D v, double z) { move(v.x, v.y, z); }
 
-    public void move(Pose p) {
-        move(p.x, p.y, p.z);
-    }
+    public void move(Pose p) { move(p.x, p.y, p.z); }
 
     public void move(double x, double y, double z) {
-        double angle = Math.atan2(x, y);
-        double power = Math.hypot(x, y);
         if (inactive_timer == null) inactive_timer = new ElapsedTime();
         if (WMath.max(Math.abs(x), Math.abs(y), Math.abs(z)) < 0.1) {
-            if (inactive_timer.seconds() > 2.5) normalHeading();
+            if (inactive_timer.seconds() > 5) normalHeading();
             resetTargetPower();
             return;
         }

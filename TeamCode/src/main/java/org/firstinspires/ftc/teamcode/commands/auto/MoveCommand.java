@@ -23,17 +23,17 @@ public class MoveCommand extends CommandBase {
     private Supplier<Pose> target_supplier;
     public static Pose target_pose;
 
-    public static double tP = 0.4;
-    public static double tD = 0.03;
+    public static double tP = 0.2;
+    public static double tD = 0.02;
 
-    public static double zP = 2.0;
+    public static double zP = 1;
     public static double zD = 0.1;
 
     public double TRANSLATIONAL_TOLERANCE = 0.5;
-    public double HEADING_TOLERANCE = Math.toRadians(1);
+    public double HEADING_TOLERANCE = Math.toRadians(2);
 
-    public double MAX_TRANSLATIONAL_POWER = 0.55;
-    public double MAX_HEADING_POWER = 0.3;
+    public double MAX_TRANSLATIONAL_POWER = 1;
+    public double MAX_HEADING_POWER = 0.5;
 
     public static PIDF xController = new PIDF(tP, 0.0, tD);
     public static PIDF yController = new PIDF(tP, 0.0, tD);
@@ -50,6 +50,7 @@ public class MoveCommand extends CommandBase {
 
     public MoveCommand(Supplier<Pose> pose_supplier) {
         target_supplier = pose_supplier;
+        target_pose = new Pose();
         WAIT_MS = 10000;
 
         xController.reset();
@@ -64,6 +65,7 @@ public class MoveCommand extends CommandBase {
 
     public MoveCommand(Pose pose) {
         target_pose = pose;
+        target_supplier = null;
         WAIT_MS = 5000;
 
         xController.reset();
@@ -122,7 +124,7 @@ public class MoveCommand extends CommandBase {
 
         if (local_vector.magnitude() <= TRANSLATIONAL_TOLERANCE
                 && Math.abs(delta.z) > HEADING_TOLERANCE)
-            zFeedForward = Math.max(-0.6 * Math.abs(delta.z) + 0.5, 0) * Math.signum(delta.z);
+            zFeedForward = 0.2 * Math.signum(delta.z);
         else zFeedForward = 0;
         double zPower = zController.calculate(delta.z) + zFeedForward;
 
@@ -134,7 +136,5 @@ public class MoveCommand extends CommandBase {
     }
 
     @Override
-    public void end(boolean interrupted) {
-        drivetrain.move(new Pose());
-    }
+    public void end(boolean interrupted) { drivetrain.move(new Pose()); }
 }

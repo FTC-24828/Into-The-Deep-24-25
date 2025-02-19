@@ -18,8 +18,8 @@ public class Localizer {
     private Pose pose;
 
     public static double WHEEL_RADIUS = 0.942882;
-    public static double X_OFFSET = 1.45033;
-    public static double Y_OFFSET = -4.48733;
+    public static double X_OFFSET = -1.84301;
+    public static double Y_OFFSET = -4.25639;
     public static double THETA_OFFSET = 0.0;
 
     private DoubleSupplier x, y;
