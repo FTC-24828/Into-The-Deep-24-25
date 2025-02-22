@@ -75,19 +75,15 @@ public class Localizer {
         robot.drivetrain.reset();
     }
 
-    public void setStart(Pose pose) {
-        start = pose;
-    }
+    public void setStart(Pose pose) { start = pose; }
 
-    public void setPose(Pose p) {
-        this.pose = p;
-    }
+    public void setPose(Pose p) { this.pose = p; }
 
-    public Pose getPose() {
-        return pose;
-    }
+    public Pose getPose() { return pose; }
 
-    public void setThetaOffset(double o) {
-        THETA_OFFSET = o;
-    }
+    public Vector2D getDisplacement() { return new Vector2D(dx, dy); }
+
+    public Pose getDerivativePose() { return new Pose(dx, dy, dtheta); }
+
+    public void setThetaOffset(double o) { THETA_OFFSET = o; }
 }

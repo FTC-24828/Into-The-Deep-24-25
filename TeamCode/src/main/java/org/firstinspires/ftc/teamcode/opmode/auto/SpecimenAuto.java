@@ -20,6 +20,7 @@ import org.firstinspires.ftc.teamcode.commands.state.SpecimenIntakeState;
 import org.firstinspires.ftc.teamcode.commands.state.SpecimenScoreState;
 import org.firstinspires.ftc.teamcode.commands.subsystem.DepositClawCommand;
 import org.firstinspires.ftc.teamcode.commands.subsystem.DepositExtensionSetState;
+import org.firstinspires.ftc.teamcode.commands.subsystem.DepositSetState;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
@@ -63,38 +64,59 @@ public class SpecimenAuto extends CommandOpMode {
         super.run();
         robot.deposit.update();
         robot.deposit.write();
+        robot.localizer.setThetaOffset(0); //OFFSET STARTING VALUE AS NEEDED
+        robot.drivetrain.setPodsHeading(Math.tan(20.0/37));
 
         robot.localizer.reset(new Pose(0, 0, 0));
 
         if (Global.USING_DASHBOARD) telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         Path scoring_path1 = new Path(
-                new Pose(35.5, 12, 0)
+                new Pose(36, 20, 0)
         );
 
         Path scoring_path2 = new Path(
-                new Pose(10, 14, 0),
-                new Pose(35.5, 14, 0)
+                new Pose(36, 14, 0)
         );
 
         Path scoring_path3 = new Path(
-                new Pose(10, 16, 0),
-                new Pose(35.5, 16, 0)
+                new Pose(36, 16, 0)
         );
 
         Path scoring_path4 = new Path(
-                new Pose(10, 18, 0),
-                new Pose(35.5, 18, 0)
+                new Pose(36, 18, 0)
         );
 
         Path scoring_path5 = new Path(
-                new Pose(10, 20, 0),
-                new Pose(35.5, 20, 0)
+                new Pose(36, 20, 0)
         );
 
         Path intaking_path = new Path(
-                new Pose(30, -20, 0),
-                new Pose(7, -20, 0)
+                new Pose(20, -20, 0),
+                new Pose(0, -20, 0)
+        );
+
+        Path push_path = new Path(
+                //1st sample
+                new Pose(20, 0, 0),
+                new Pose(20, -15, 0),
+                new Pose(50, -25, 0),
+                new Pose(50, -35, 0),
+                new Pose(11, -30, 0),
+
+                //2nd sample
+                new Pose(50, -35, 0),
+                new Pose(50, -43, 0),
+                new Pose(11, -43, 0),
+
+                //3rd sample
+                new Pose(50, -43, 0),
+                new Pose(53, -47, 0),
+                new Pose(11, -47 , 0),
+
+                //specimen pickup
+                new Pose(20, -20, 0),
+                new Pose(-1, -20, 0)
         );
 
         path_controller = new PurePursuit(10, 0, 0);
@@ -104,8 +126,13 @@ public class SpecimenAuto extends CommandOpMode {
         path_controller.add(scoring_path3); //3
         path_controller.add(scoring_path4); //4
         path_controller.add(scoring_path5); //5
+        path_controller.add(push_path);     //6
 
         while (!isStarted()) {
+            robot.read();
+            robot.update();
+            robot.write();
+            robot.clearBulkCache(Global.Hub.CONTROL_HUB);
             double loop = System.nanoTime();
             telemetry.addLine("Autonomous initializing...");
             telemetry.addData("Frequency", 0);
@@ -124,82 +151,71 @@ public class SpecimenAuto extends CommandOpMode {
                         new AutoSpecimenScoreState(),
 
                         //pre-load specimen
-                        new MoveCommand(() -> path_controller.calculateGoal(1), 2600)
-                                .alongWith(new DelayCommand(new SpecimenScoreState(), 500)),
-                        new WaitCommand(200),
+                        new MoveCommand(() -> path_controller.calculateGoal(1), 1700)
+                                .alongWith(new DelayCommand(new SpecimenScoreState(), 800)),
                         new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
-                        new WaitCommand(300),
+                        new WaitCommand(400),
                         new DepositClawCommand(Deposit.ClawState.OPEN),
-                        new WaitCommand(250),
-                        new NeutralState(),
+                        new SpecimenIntakeState(),
+                        new WaitCommand(100),
 
-                        //push 1st sample
-                        new MoveCommand(() -> new Pose(10, -20, Math.toRadians(-50)), 1500)
-                                .alongWith(new DelayCommand(new SamplePushState(1), 800)),
-                        new WaitCommand(700),
-                        new MoveCommand(() -> new Pose(10, -20, Math.toRadians(-120)), 1500),
-                        new SampleIntakeState(),
-
-                        //push 2nd sample
-                        new MoveCommand(() -> new Pose(10, -35, Math.toRadians(-50)), 1500)
-                                .alongWith(new DelayCommand(new SamplePushState(1), 800)),
-                        new WaitCommand(700),
-                        new MoveCommand(() -> new Pose(10, -35, Math.toRadians(-120)), 1500),
-                        new SampleIntakeState(),
-
-                        //push 3st sample
-                        new MoveCommand(() -> new Pose(10, -50, Math.toRadians(-50)), 1500)
-                                .alongWith(new DelayCommand(new SamplePushState(1), 800)),
-                        new WaitCommand(700),
-                        new MoveCommand(() -> new Pose(10, -50, Math.toRadians(-120)), 1500),
-                        new SampleIntakeState(),
+                        //push samples
+                        new MoveCommand(() -> path_controller.calculateGoal(6), 11000),
 
                         //2nd specimen
+                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+                        new WaitCommand(200),
+                        new DepositSetState(Deposit.State.SPECIMEN_SCORE),
+                        new MoveCommand(() -> path_controller.calculateGoal(2), 1700)
+                                .alongWith(new DelayCommand(new SpecimenScoreState(), 800)),
+                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+                        new WaitCommand(500),
+                        new DepositClawCommand(Deposit.ClawState.OPEN),
                         new SpecimenIntakeState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
-//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
-//                        new WaitCommand(250),
-//                        new SpecimenScoreState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(2), 2600),
-//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
-//                        new WaitCommand(250),
-//                        new DepositClawCommand(Deposit.ClawState.OPEN),
-//
-//                        //3rd specimen
-//                        new SpecimenIntakeState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
-//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
-//                        new WaitCommand(250),
-//                        new SpecimenScoreState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(3), 2600),
-//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
-//                        new WaitCommand(250),
-//                        new DepositClawCommand(Deposit.ClawState.OPEN),
-//
-//                        //4th specimen
-//                        new SpecimenIntakeState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
-//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
-//                        new WaitCommand(250),
-//                        new SpecimenScoreState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(4), 2600),
-//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
-//                        new WaitCommand(250),
-//                        new DepositClawCommand(Deposit.ClawState.OPEN),
-//
-//                        //5th specimen
-//                        new SpecimenIntakeState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
-//                        new DepositClawCommand(Deposit.ClawState.CLOSED),
-//                        new WaitCommand(250),
-//                        new SpecimenScoreState(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(5), 2600),
-//                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
-//                        new WaitCommand(250),
-//                        new DepositClawCommand(Deposit.ClawState.OPEN),
+                        new WaitCommand(100),
+                        new MoveCommand(() -> path_controller.calculateGoal(0), 1700),
+
+                        //3rd specimen
+                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+                        new WaitCommand(200),
+                        new DepositSetState(Deposit.State.SPECIMEN_SCORE),
+                        new MoveCommand(() -> path_controller.calculateGoal(3), 1700)
+                                .alongWith(new DelayCommand(new SpecimenScoreState(), 800)),
+                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+                        new WaitCommand(500),
+                        new DepositClawCommand(Deposit.ClawState.OPEN),
+                        new SpecimenIntakeState(),
+                        new WaitCommand(100),
+                        new MoveCommand(() -> path_controller.calculateGoal(0), 1700),
+
+                        //4th specimen
+                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+                        new WaitCommand(200),
+                        new DepositSetState(Deposit.State.SPECIMEN_SCORE),
+                        new MoveCommand(() -> path_controller.calculateGoal(4), 1700)
+                                .alongWith(new DelayCommand(new SpecimenScoreState(), 800)),
+                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+                        new WaitCommand(500),
+                        new DepositClawCommand(Deposit.ClawState.OPEN),
+                        new SpecimenIntakeState(),
+                        new WaitCommand(100),
+                        new MoveCommand(() -> path_controller.calculateGoal(0), 1700),
+
+                        //5th specimen
+                        new DepositClawCommand(Deposit.ClawState.CLOSED),
+                        new WaitCommand(200),
+                        new DepositSetState(Deposit.State.SPECIMEN_SCORE),
+                        new MoveCommand(() -> path_controller.calculateGoal(5), 1700)
+                                .alongWith(new DelayCommand(new SpecimenScoreState(), 800)),
+                        new DepositExtensionSetState(Extension.State.SPECIMEN_CLIP),
+                        new WaitCommand(500),
+                        new DepositClawCommand(Deposit.ClawState.OPEN),
+                        new SpecimenIntakeState(),
+                        new WaitCommand(100),
 
                         //observation zone park
-//                        new MoveCommand(() -> new Pose(2, -50, 0)),
+                        new MoveCommand(new Pose(2, -40, 0)),
+
 
                         new InstantCommand(() -> end_time = timer.seconds())
 

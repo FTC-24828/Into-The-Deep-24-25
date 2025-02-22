@@ -24,9 +24,9 @@ public class Extension implements WSubsystem {
 
     public HashMap<State, Integer> deposit_position = new HashMap<State, Integer>() {{
         put(State.RETRACT, 0);
-        put(State.SPECIMEN, 500);
-        put(State.SPECIMEN_CLIP, 960);
-        put(State.EXTEND, 2090);
+        put(State.SPECIMEN, 550);
+        put(State.SPECIMEN_CLIP, 925);
+        put(State.EXTEND, 2025);
     }};
 
     public static double kP = 0.01;
@@ -44,7 +44,7 @@ public class Extension implements WSubsystem {
     public ElapsedTime deposit_timer;
 
     public double intake_power = 0, deposit_power = 0;
-    public static double INTAKE_FEEDFORWARD = 0.15;
+    public static double INTAKE_FEEDFORWARD = 0.2;
     public static double DEPOSIT_FEEDFORWARD = 0.2;
 
     public void init(DcMotor[] motor) {
@@ -79,7 +79,8 @@ public class Extension implements WSubsystem {
             if (deposit_state == State.RETRACT)
                 deposit_offset = robot.intSubscriber(Sensors.DEPOSIT_ENCODER);
         }
-        deposit_power = deposit_feedforward() + (deposit_reached ? 0
+        if (deposit_reached && deposit_state == State.RETRACT) deposit_power = 0;
+        else deposit_power = deposit_feedforward() + (deposit_reached ? 0
                 : deposit_pid.calculate(deposit_tick ,deposit_position.get(deposit_state)));
 
         if (Math.abs(intake_power) < 0.05) intake_power = 0;
@@ -113,7 +114,7 @@ public class Extension implements WSubsystem {
     }
 
     private double deposit_feedforward() {
-        if (deposit_state == State.RETRACT) return 0;
+        if (deposit_state == State.RETRACT) return -DEPOSIT_FEEDFORWARD;
         else return DEPOSIT_FEEDFORWARD;
     }
 

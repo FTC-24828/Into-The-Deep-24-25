@@ -29,7 +29,7 @@ public class Deposit implements WSubsystem {
     //wrist
     public enum WristState {INTAKE, NEUTRAL, TRANSFER, SPECIMEN_SCORE, SAMPLE_SCORE, SAMPLE_DROP}
     public HashMap<WristState, Double> wrist_position = new HashMap<WristState, Double>() {{
-        put(WristState.INTAKE, 0.92);
+        put(WristState.INTAKE, 0.94);
         put(WristState.NEUTRAL, 0.3);
         put(WristState.TRANSFER, 0.0);
         put(WristState.SPECIMEN_SCORE, 0.35);
@@ -48,9 +48,7 @@ public class Deposit implements WSubsystem {
     public enum ClawState {OPEN, CLOSED}
     public boolean claw_lock = false;
     public ClawState claw_state;
-    public void setClawState(@NonNull ClawState state) {
-        claw_state = state;
-    }
+    public void setClawState(@NonNull ClawState state) { claw_state = state; }
     public void toggleClawState() {
         if (claw_lock) return;
         claw_state = claw_state == ClawState.CLOSED ? ClawState.OPEN : ClawState.CLOSED;
@@ -63,7 +61,7 @@ public class Deposit implements WSubsystem {
 
         crane.scaleRange(0, 1);
         wrist.scaleRange(0, 1);
-        claw.scaleRange(0.5, 1);
+        claw.scaleRange(0.4, 1);
     }
 
     @Override

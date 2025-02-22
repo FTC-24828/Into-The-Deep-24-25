@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.tests.system;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.ConditionalCommand;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.commands.subsystem.DepositExtensionSetState;
 import org.firstinspires.ftc.teamcode.commands.subsystem.IntakeExtensionSetState;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.Sensors;
@@ -45,22 +47,16 @@ public class ExtensionTest extends CommandOpMode {
                 new IntakeExtensionSetState(Extension.State.EXTEND));
 
         controller1.getGamepadButton(GamepadKeys.Button.X).whenPressed(
-                new InstantCommand(() -> {
-                    if (robot.extension.deposit_state == Extension.State.EXTEND
-                        || robot.extension.deposit_state == Extension.State.SPECIMEN)
-                        robot.extension.deposit_state = Extension.State.RETRACT;
-                    else robot.extension.deposit_state = Extension.State.EXTEND;
-                })
-        );
+                new ConditionalCommand(new DepositExtensionSetState(Extension.State.RETRACT),
+                        new DepositExtensionSetState(Extension.State.EXTEND),
+                        () -> robot.extension.deposit_state == Extension.State.EXTEND
+                                || robot.extension.deposit_state == Extension.State.SPECIMEN));
 
         controller1.getGamepadButton(GamepadKeys.Button.B).whenPressed(
-                new InstantCommand(() -> {
-                    if (robot.extension.deposit_state == Extension.State.EXTEND
-                            || robot.extension.deposit_state == Extension.State.SPECIMEN)
-                        robot.extension.deposit_state = Extension.State.RETRACT;
-                    else robot.extension.deposit_state = Extension.State.SPECIMEN;
-                })
-        );
+                new ConditionalCommand(new DepositExtensionSetState(Extension.State.SPECIMEN),
+                        new DepositExtensionSetState(Extension.State.RETRACT),
+                        () -> robot.extension.deposit_state == Extension.State.EXTEND
+                                || robot.extension.deposit_state == Extension.State.RETRACT));
 
         while (opModeInInit()) {
             telemetry.addLine("Initialization complete.");

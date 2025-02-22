@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.apache.commons.math3.analysis.function.Power;
 import org.firstinspires.ftc.teamcode.common.controllers.PIDF;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
@@ -21,24 +22,29 @@ public class MoveCommand extends CommandBase {
     private final Drivetrain drivetrain = robot.drivetrain;
     private final Localizer localizer = robot.localizer;
     private Supplier<Pose> target_supplier;
+    private Pose target;
     public static Pose target_pose;
 
-    public static double tP = 0.2;
-    public static double tD = 0.02;
+    public static double tP = 0.1;
+    public static double tD = 0.001;
 
     public static double zP = 1;
-    public static double zD = 0.1;
+    public static double zD = 0.05;
 
-    public double TRANSLATIONAL_TOLERANCE = 0.5;
+    public double TRANSLATIONAL_TOLERANCE = 0.25;
     public double HEADING_TOLERANCE = Math.toRadians(2);
 
     public double MAX_TRANSLATIONAL_POWER = 1;
     public double MAX_HEADING_POWER = 0.5;
 
+    public static double POWER_STEP = 0.075;
+    public static double HEADING_FEEDFORWARD = 0.3;
+
     public static PIDF xController = new PIDF(tP, 0.0, tD);
     public static PIDF yController = new PIDF(tP, 0.0, tD);
     public static PIDF zController = new PIDF(zP, 0.0, zD);
     public static Pose powers = new Pose();
+    public static Pose last_power = new Pose();
 
     public static double zFeedForward;
 
@@ -64,7 +70,7 @@ public class MoveCommand extends CommandBase {
     }
 
     public MoveCommand(Pose pose) {
-        target_pose = pose;
+        target = pose;
         target_supplier = null;
         WAIT_MS = 5000;
 
@@ -89,7 +95,8 @@ public class MoveCommand extends CommandBase {
         if (timer == null) timer = new ElapsedTime();
         if (stable == null) stable = new ElapsedTime();
 
-        if (target_supplier != null) target_pose = target_supplier.get();
+        if (target_supplier != null) target = target_supplier.get();
+        target_pose = target;
         drivetrain.move(powers = calculatePower(localizer.getPose()));
     }
 
@@ -122,9 +129,9 @@ public class MoveCommand extends CommandBase {
             yPower *= 1.0/max;
         }
 
-        if (local_vector.magnitude() <= TRANSLATIONAL_TOLERANCE
+        if (delta.toVector2D().magnitude() <= TRANSLATIONAL_TOLERANCE * 2
                 && Math.abs(delta.z) > HEADING_TOLERANCE)
-            zFeedForward = 0.2 * Math.signum(delta.z);
+            zFeedForward = HEADING_FEEDFORWARD * Math.signum(delta.z);
         else zFeedForward = 0;
         double zPower = zController.calculate(delta.z) + zFeedForward;
 
@@ -132,7 +139,18 @@ public class MoveCommand extends CommandBase {
         yPower = WMath.clamp(yPower, -1, 1) * MAX_TRANSLATIONAL_POWER;
         zPower = WMath.clamp(zPower, -1, 1) * MAX_HEADING_POWER;
 
-        return new Pose(xPower * v, yPower * v, zPower * v);
+        Pose target_power = new Pose(xPower * v, yPower * v, zPower * v);
+
+        //if accelerating and change in power is too large (-0.8 to 1)
+        if (Math.abs(last_power.x - target_power.x) > POWER_STEP
+                && Math.abs(target_power.x) >= Math.abs(last_power.x))
+            target_power.x = last_power.x + POWER_STEP * Math.signum(target_power.x);
+        if (Math.abs(last_power.y - target_power.y) > POWER_STEP
+                && Math.abs(target_power.y) >= Math.abs(last_power.y))
+            target_power.y = last_power.y + POWER_STEP * Math.signum(target_power.y);
+        last_power = target_power;
+
+        return target_power;
     }
 
     @Override

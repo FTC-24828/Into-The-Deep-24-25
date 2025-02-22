@@ -107,7 +107,7 @@ public class SwerveTest extends CommandOpMode {
         super.run(); //runs commands scheduled in initialize()
         robot.update(); //calculations/writing data to actuators
 
-//        robot.write(); //write power to actuators (setting power to motors/servos)
+        robot.write(); //write power to actuators (setting power to motors/servos)
       
         robot.clearBulkCache(Global.Hub.CONTROL_HUB); //clear cache accordingly to get new read() values
 

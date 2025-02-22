@@ -25,6 +25,7 @@ import org.firstinspires.ftc.teamcode.commands.subsystem.DepositClawCommand;
 import org.firstinspires.ftc.teamcode.commands.subsystem.IntakeClawCommand;
 import org.firstinspires.ftc.teamcode.commands.subsystem.IntakeSetState;
 import org.firstinspires.ftc.teamcode.commands.subsystem.TransferSequence;
+import org.firstinspires.ftc.teamcode.commands.tele.SpecimenAimSequence;
 import org.firstinspires.ftc.teamcode.common.controllers.PIDF;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
@@ -64,7 +65,7 @@ public class Main extends CommandOpMode {
 
         Global.IS_AUTO = false;
         Global.USING_DASHBOARD = true;
-        Global.DEBUG = true;
+        Global.DEBUG = false;
         Global.USING_IMU = true;
         Global.USING_WEBCAM = false;
         Global.setSlowMode(false);
@@ -122,14 +123,18 @@ public class Main extends CommandOpMode {
 
         //transfer state
         controller1.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(new NeutralState().andThen(new WaitCommand(600), new TransferState()));
+                .whenPressed(new ConditionalCommand(
+                        new IntakeSetState(Intake.State.TRANSFER).andThen(new WaitCommand(350)),
+                        new InstantCommand(),
+                        () -> Global.STATE == Global.State.SAMPLE_INTAKE)
+                        .andThen(new NeutralState(), new WaitCommand(600), new TransferState()));
 
         //specimen
         controller1.getGamepadButton(GamepadKeys.Button.B)
                 .whenPressed(new ConditionalCommand(
                         new SpecimenIntakeState()
                                 .andThen(new DepositClawCommand(Deposit.ClawState.OPEN)),
-                        new SpecimenScoreState(),
+                        new SpecimenAimSequence(),
                         () -> Global.STATE != Global.State.SPECIMEN_INTAKE
                 ));
 
@@ -168,6 +173,16 @@ public class Main extends CommandOpMode {
                     }
                 }));
 
+        //reset yaw
+        controller1.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+                .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw()));
+        controller1.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw() - Math.PI / 2));
+        controller1.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw() + Math.PI));
+        controller1.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw() + Math.PI / 2));
+
         while (opModeInInit()) {
             telemetry.addLine("Initialization complete.");
             telemetry.update();
@@ -190,7 +205,7 @@ public class Main extends CommandOpMode {
         double yaw = WMath.wrapAngle(robot.getYaw() - INITIAL_YAW);
         Vector2D input_vector = new Vector2D(controller1.getLeftY(), -controller1.getLeftX(),
                 (drive_mode == Global.DriveMode.FIELD ? -yaw : 0));
-        if (Global.SLOW_MODE()) input_vector = input_vector.scale(0.4);
+        if (Global.SLOW_MODE()) input_vector = input_vector.scale(0.3);
 
         boolean heading_lock = -controller1.getRightY() > 0.5;
         double zPower = heading_lock ? heading_pid.calculate(yaw, 0) :

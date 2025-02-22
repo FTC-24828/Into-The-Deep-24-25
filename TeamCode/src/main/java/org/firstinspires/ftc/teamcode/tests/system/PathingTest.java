@@ -47,7 +47,7 @@ public class PathingTest extends CommandOpMode{
         if (Global.USING_DASHBOARD) telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         robot.localizer.setThetaOffset(0); //OFFSET STARTING VALUE AS NEEDED
-        robot.read();
+        robot.drivetrain.setPodsHeading(Math.tan(50/10.0));
 
         Path p = new Path(
 //                new Spline(new Pose(1, 0, 0),
@@ -78,6 +78,10 @@ public class PathingTest extends CommandOpMode{
         path_controller.add(p);
 
         while (!isStarted()) {
+            robot.read();
+            robot.update();
+            robot.write();
+            robot.clearBulkCache(Global.Hub.CONTROL_HUB);
             telemetry.addLine("Autonomous initializing...");
             telemetry.addData("x power", MoveCommand.powers.x);
             telemetry.addData("y power", MoveCommand.powers.y);
@@ -85,6 +89,7 @@ public class PathingTest extends CommandOpMode{
             telemetry.addData("x error", MoveCommand.xController.last_error);
             telemetry.addData("y error", MoveCommand.yController.last_error);
             telemetry.addData("z error", MoveCommand.zController.last_error);
+
             telemetry.addData("z Feedforward", MoveCommand.zFeedForward);
             telemetry.addData("Baseline", 0);
             telemetry.update();
@@ -95,8 +100,8 @@ public class PathingTest extends CommandOpMode{
                         new InstantCommand(timer::reset),
 
                         //translation test
-                        new MoveCommand(new Pose(50, 10, 0), 7000),
-                        new MoveCommand(new Pose(0, 0, 0), 7000),
+                        new MoveCommand(new Pose(40, 10, 0), 8000),
+                        new MoveCommand(new Pose(0, 0, 0), 8000),
 
                         //rotation test
 //                        new MoveCommand(new Pose(0, 0, -Math.PI/2), 5000),
@@ -139,14 +144,14 @@ public class PathingTest extends CommandOpMode{
         telemetry.addData("Current Pose", robot.localizer.getPose().toString());
 
         //Pure pursuit debug
-        telemetry.addData("command target", MoveCommand.target_pose);
-        telemetry.addData("goal", path_controller.calculateGoal(0));
-        telemetry.addData("goal index", path_controller.current_goal);
-        telemetry.addData("goal pose", path_controller.path.get(0).get(path_controller.current_goal).toString());
-                path_controller.path.get(0).get(path_controller.current_goal);
-        telemetry.addData("intersections", path_controller.intersection.size());
-        if (!path_controller.intersection.isEmpty())
-            telemetry.addData("intersection 1", path_controller.intersection.get(0));
+//        telemetry.addData("command target", MoveCommand.target_pose);
+//        telemetry.addData("goal", path_controller.calculateGoal(0));
+//        telemetry.addData("goal index", path_controller.current_goal);
+//        telemetry.addData("goal pose", path_controller.path.get(0).get(path_controller.current_goal).toString());
+//                path_controller.path.get(0).get(path_controller.current_goal);
+//        telemetry.addData("intersections", path_controller.intersection.size());
+//        if (!path_controller.intersection.isEmpty())
+//            telemetry.addData("intersection 1", path_controller.intersection.get(0));
 
 //        path_controller.r = 5;
 //        path_controller.findIntersections(new Vector2D(6.1, 5.7), new Vector2D(-3, -6));
@@ -157,14 +162,14 @@ public class PathingTest extends CommandOpMode{
 //                path_controller.intersection.get(1).y);
 
         //PID data
-//        telemetry.addData("x power", MoveCommand.powers.x);
-//        telemetry.addData("y power", MoveCommand.powers.y);
-//        telemetry.addData("z power", MoveCommand.powers.z);
-//        telemetry.addData("x error", MoveCommand.xController.last_error);
-//        telemetry.addData("y error", MoveCommand.yController.last_error);
-//        telemetry.addData("z error", MoveCommand.zController.last_error);
-//        telemetry.addData("z Feedforward", MoveCommand.zFeedForward);
-//        telemetry.addData("Baseline", 0);
+        telemetry.addData("x power", MoveCommand.powers.x);
+        telemetry.addData("y power", MoveCommand.powers.y);
+        telemetry.addData("z power", MoveCommand.powers.z);
+        telemetry.addData("x error", MoveCommand.xController.last_error);
+        telemetry.addData("y error", MoveCommand.yController.last_error);
+        telemetry.addData("z error", MoveCommand.zController.last_error);
+        telemetry.addData("z Feedforward", MoveCommand.zFeedForward);
+        telemetry.addData("Baseline", 0);
         telemetry.update();
         loop_time = loop;
     }

@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commands.auto.MoveCommand;
@@ -21,6 +22,7 @@ import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Deposit;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Extension;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 
+@Disabled
 @Autonomous(name = "Sample Auto")
 public class SampleAuto extends CommandOpMode {
     private final WRobot robot = WRobot.getInstance();
