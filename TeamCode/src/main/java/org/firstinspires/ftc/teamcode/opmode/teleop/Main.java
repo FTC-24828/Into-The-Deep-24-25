@@ -24,10 +24,12 @@ import org.firstinspires.ftc.teamcode.commands.state.TransferState;
 import org.firstinspires.ftc.teamcode.commands.subsystem.DepositClawCommand;
 import org.firstinspires.ftc.teamcode.commands.subsystem.IntakeClawCommand;
 import org.firstinspires.ftc.teamcode.commands.subsystem.IntakeSetState;
+import org.firstinspires.ftc.teamcode.commands.subsystem.SamplePickUpSequence;
 import org.firstinspires.ftc.teamcode.commands.subsystem.TransferSequence;
 import org.firstinspires.ftc.teamcode.commands.tele.SpecimenAimSequence;
 import org.firstinspires.ftc.teamcode.common.controllers.PIDF;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
+import org.firstinspires.ftc.teamcode.common.hardware.Sensors;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Deposit;
@@ -109,9 +111,7 @@ public class Main extends CommandOpMode {
         controller1.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(new ConditionalCommand(
                         new SampleIntakeState(),
-                        new IntakeClawCommand(Intake.ClawState.OPEN)
-                                .andThen(new WaitCommand(100))
-                                .andThen(new IntakeSetState(Intake.State.INTAKE)),
+                        new SamplePickUpSequence(),
                         () -> Global.STATE != Global.State.SAMPLE_INTAKE
                 ))
                 .whenReleased(new ConditionalCommand(
@@ -162,26 +162,24 @@ public class Main extends CommandOpMode {
                        robot.deposit.toggleClawState();
                    }
                 }))
+                .whenReleased(new ConditionalCommand(
+                        new SpecimenIntakeState()
+                                .andThen(new DepositClawCommand(Deposit.ClawState.OPEN)),
+                        new InstantCommand(() -> {
+                            if (Global.STATE == Global.State.SAMPLE_SCORING) {
+                                robot.deposit.setState(Deposit.State.NEUTRAL);
+                                robot.deposit.setClawState(Deposit.ClawState.CLOSED);
+                            }}), () -> Global.STATE == Global.State.SPECIMEN_SCORING ));
+
+        controller1.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+                        .whenPressed(new InstantCommand(() -> robot.extension_motor[1].setPower(-0.5)))
                 .whenReleased(new InstantCommand(() -> {
-                    if (Global.STATE == Global.State.SPECIMEN_SCORING) {
-                        robot.extension.setDepositState(Extension.State.SPECIMEN);
-                        robot.deposit.setClawState(Deposit.ClawState.OPEN);
-                    }
-                    else if (Global.STATE == Global.State.SAMPLE_SCORING) {
-                        robot.deposit.setState(Deposit.State.NEUTRAL);
-                        robot.deposit.setClawState(Deposit.ClawState.CLOSED);
-                    }
+                    robot.extension.deposit_offset = robot.intSubscriber(Sensors.DEPOSIT_ENCODER);
                 }));
 
         //reset yaw
         controller1.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw()));
-        controller1.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw() - Math.PI / 2));
-        controller1.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw() + Math.PI));
-        controller1.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new InstantCommand(() -> INITIAL_YAW = robot.getYaw() + Math.PI / 2));
 
         while (opModeInInit()) {
             telemetry.addLine("Initialization complete.");
@@ -209,7 +207,7 @@ public class Main extends CommandOpMode {
 
         boolean heading_lock = -controller1.getRightY() > 0.5;
         double zPower = heading_lock ? heading_pid.calculate(yaw, 0) :
-            -controller1.getRightX() * (Global.SLOW_MODE()? 0.3 : 1);
+            -controller1.getRightX() * (Global.SLOW_MODE()? 0.3 : 0.7);
 
         //drivetrain move
         robot.drivetrain.move(input_vector, zPower);

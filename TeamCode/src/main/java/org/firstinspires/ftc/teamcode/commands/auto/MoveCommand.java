@@ -25,10 +25,10 @@ public class MoveCommand extends CommandBase {
     private Pose target;
     public static Pose target_pose;
 
-    public static double tP = 0.1;
+    public static double tP = 0.065;
     public static double tD = 0.001;
 
-    public static double zP = 1;
+    public static double zP = 1.2;
     public static double zD = 0.05;
 
     public double TRANSLATIONAL_TOLERANCE = 0.25;
@@ -37,7 +37,7 @@ public class MoveCommand extends CommandBase {
     public double MAX_TRANSLATIONAL_POWER = 1;
     public double MAX_HEADING_POWER = 0.5;
 
-    public static double POWER_STEP = 0.075;
+    public static double POWER_STEP = 0.08;
     public static double HEADING_FEEDFORWARD = 0.3;
 
     public static PIDF xController = new PIDF(tP, 0.0, tD);
@@ -69,6 +69,12 @@ public class MoveCommand extends CommandBase {
         WAIT_MS = ms_timeout;
     }
 
+    public MoveCommand(Supplier<Pose> pose_supplier, double ms_timeout, double max_power) {
+        this(pose_supplier);
+        WAIT_MS = ms_timeout;
+        MAX_TRANSLATIONAL_POWER = max_power;
+    }
+
     public MoveCommand(Pose pose) {
         target = pose;
         target_supplier = null;
@@ -82,6 +88,13 @@ public class MoveCommand extends CommandBase {
     public MoveCommand(Pose pose, double ms_timeout) {
         this(pose);
         WAIT_MS = ms_timeout;
+    }
+
+
+    public MoveCommand(Pose pose, double ms_timeout, double max_power) {
+        this(pose);
+        WAIT_MS = ms_timeout;
+        MAX_TRANSLATIONAL_POWER = max_power;
     }
 
     public MoveCommand setTolerance(double in_translational_tolerance, double in_yaw_tolerance) {

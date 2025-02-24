@@ -142,10 +142,10 @@ public class WRobot {
             motor[2] = hardware_map.get(DcMotorEx.class, "motor02");    //   |   |   |
             motor[3] = hardware_map.get(DcMotorEx.class, "motor03");    //  [1]_____[2]
 
-            servo[0] = hardware_map.get(CRServo.class, "servo00");
+            servo[0] = hardware_map.get(CRServo.class, "servo10");
             servo[1] = hardware_map.get(CRServo.class, "servo01");
             servo[2] = hardware_map.get(CRServo.class, "servo02");
-            servo[3] = hardware_map.get(CRServo.class, "servo03");
+            servo[3] = hardware_map.get(CRServo.class, "servo13");
 
             heading_encoder[0] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "analog00"));
             heading_encoder[1] = new WAnalogEncoder(hardware_map.get(AnalogInput.class, "analog01"));
@@ -179,7 +179,7 @@ public class WRobot {
         }
 
         if (intake != null) {
-            bar0 = hardware_map.get(Servo.class, "servo13");
+            bar0 = hardware_map.get(Servo.class, "servo03");
             bar1 = hardware_map.get(Servo.class, "servo14");
             intake_wrist = hardware_map.get(Servo.class, "servo15");
             intake_pivot = hardware_map.get(Servo.class, "servo04");
@@ -191,7 +191,7 @@ public class WRobot {
         }
 
         if (deposit != null) {
-            deposit_crane = hardware_map.get(Servo.class, "servo10");
+            deposit_crane = hardware_map.get(Servo.class, "servo00");
             deposit_wrist = hardware_map.get(Servo.class, "servo11");
             deposit_claw = hardware_map.get(Servo.class, "servo12");
 

@@ -62,10 +62,10 @@ public class Drivetrain implements WSubsystem {
         encoder[2].setInverted(false);
         encoder[3].setInverted(false);
 
-        encoder[0].setOffset(-0.299);
-        encoder[1].setOffset(-1.077);
-        encoder[2].setOffset(-2.969);
-        encoder[3].setOffset(-1.989);
+        encoder[0].setOffset(-2.810);
+        encoder[1].setOffset(-1.438);
+        encoder[2].setOffset(-0.068);
+        encoder[3].setOffset(-1.622);
 
         normalHeading();
 

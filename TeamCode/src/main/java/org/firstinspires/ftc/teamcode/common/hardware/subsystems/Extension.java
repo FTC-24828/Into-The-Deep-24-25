@@ -18,14 +18,15 @@ import java.util.HashMap;
 public class Extension implements WSubsystem {
     private final WRobot robot = WRobot.getInstance();
 
-    public enum State {RETRACT, SPECIMEN, SPECIMEN_CLIP, EXTEND}
+    public enum State {RETRACT, SPECIMEN, SPECIMEN_CLIP, EXTEND, HANG}
     public State intake_state = State.RETRACT;
     public State deposit_state = State.RETRACT;
 
     public HashMap<State, Integer> deposit_position = new HashMap<State, Integer>() {{
         put(State.RETRACT, 0);
+        put(State.HANG, 300);
         put(State.SPECIMEN, 550);
-        put(State.SPECIMEN_CLIP, 925);
+        put(State.SPECIMEN_CLIP, 930);
         put(State.EXTEND, 2025);
     }};
 
@@ -86,7 +87,7 @@ public class Extension implements WSubsystem {
         if (Math.abs(intake_power) < 0.05) intake_power = 0;
         if (Math.abs(deposit_power) < 0.05) deposit_power = 0;
         robot.intake_extension.setPower(WMath.clamp(intake_power, -0.7, 1));
-        robot.deposit_extension.setPower(WMath.clamp(deposit_power, -0.6, 1));
+        robot.deposit_extension.setPower(WMath.clamp(deposit_power, -0.8, 1));
     }
 
     @Override

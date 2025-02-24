@@ -11,7 +11,21 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.commands.auto.AutoSampleIntakeState;
+import org.firstinspires.ftc.teamcode.commands.auto.AutoSpecimenScoreState;
+import org.firstinspires.ftc.teamcode.commands.auto.DelayCommand;
 import org.firstinspires.ftc.teamcode.commands.auto.MoveCommand;
+import org.firstinspires.ftc.teamcode.commands.auto.SampleDropSequence;
+import org.firstinspires.ftc.teamcode.commands.state.SampleIntakeState;
+import org.firstinspires.ftc.teamcode.commands.state.SampleScoreState;
+import org.firstinspires.ftc.teamcode.commands.state.TransferState;
+import org.firstinspires.ftc.teamcode.commands.subsystem.DepositClawCommand;
+import org.firstinspires.ftc.teamcode.commands.subsystem.DepositExtensionSetState;
+import org.firstinspires.ftc.teamcode.commands.subsystem.DepositSetState;
+import org.firstinspires.ftc.teamcode.commands.subsystem.IntakeClawCommand;
+import org.firstinspires.ftc.teamcode.commands.subsystem.IntakeSetState;
+import org.firstinspires.ftc.teamcode.commands.subsystem.SamplePickUpSequence;
+import org.firstinspires.ftc.teamcode.commands.subsystem.TransferSequence;
 import org.firstinspires.ftc.teamcode.common.hardware.Global;
 import org.firstinspires.ftc.teamcode.common.hardware.WRobot;
 import org.firstinspires.ftc.teamcode.common.hardware.drive.Drivetrain;
@@ -22,7 +36,6 @@ import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Deposit;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Extension;
 import org.firstinspires.ftc.teamcode.common.hardware.subsystems.Intake;
 
-@Disabled
 @Autonomous(name = "Sample Auto")
 public class SampleAuto extends CommandOpMode {
     private final WRobot robot = WRobot.getInstance();
@@ -49,77 +62,40 @@ public class SampleAuto extends CommandOpMode {
         //initialize robot
         robot.addSubsystem(new Drivetrain(), new Extension(), new Intake(), new Deposit());
         robot.init(hardwareMap, telemetry);
-        Global.setState(Global.State.NEUTRAL);
-        robot.intake.setClawState(Intake.ClawState.CLOSED);
-        robot.read();
+        super.schedule(
+                new AutoSpecimenScoreState(),
+                new DepositClawCommand(Deposit.ClawState.CLOSED)
+        );
+        super.run();
+        robot.deposit.update();
+        robot.deposit.write();
+        robot.localizer.setThetaOffset(0); //OFFSET STARTING VALUE AS NEEDED
+        robot.drivetrain.setPodsHeading(0);
 
         robot.localizer.reset(new Pose(0, 0, 0));
 
         if (Global.USING_DASHBOARD) telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        Path scoring_path1 = new Path(
-                new Pose(33.5, 12, 0)
+        Pose bucket_pose = new Pose(5, 30, Math.toRadians(-45));
+
+        Path preload_path = new Path(
+            new Pose(14, 0, 0),
+            bucket_pose
         );
 
-        Path push_path = new Path(
-                //1st sample
-                new Pose(10, 0, 0),
-                new Pose(10, -20, 0),
-                new Pose(60, -25, 0),
-                new Pose(50, -35, 0),
-                new Pose(3, -30, 0),
-
-                //2nd sample
-                new Pose(60, -35, 0),
-                new Pose(50, -40, 0),
-                new Pose(3, -43, 0),
-
-//                //3rd sample
-//                new Pose(60, -40, 0),
-//                new Pose(50, -48, 0),
-//                new Pose(3, -45, 0),
-
-                //specimen pickup
-                new Pose(30, -10, Math.PI),
-                new Pose(7, -20, Math.PI)
+        Path parking_path = new Path(
         );
 
-        Path scoring_path2 = new Path(
-                new Pose(10, 14, 0),
-                new Pose(33.5, 14, 0)
-        );
-
-        Path scoring_path3 = new Path(
-                new Pose(10, 16, 0),
-                new Pose(33.5, 16, 0)
-        );
-
-        Path scoring_path4 = new Path(
-                new Pose(10, 18, 0),
-                new Pose(34, 18, 0)
-        );
-
-        Path scoring_path5 = new Path(
-                new Pose(10, 20, 0),
-                new Pose(34, 20, 0)
-        );
-
-        Path intaking_path = new Path(
-                new Pose(10, -10, Math.PI * 0.8),
-                new Pose(30, -20, Math.PI),
-                new Pose(7, -20, Math.PI)
-        );
 
         path_controller = new PurePursuit(10, 0, 0);
-        path_controller.add(scoring_path1);
-        path_controller.add(push_path);
-        path_controller.add(intaking_path);
-        path_controller.add(scoring_path2);
-        path_controller.add(scoring_path3);
-        path_controller.add(scoring_path4);
-        path_controller.add(scoring_path5);
+        path_controller.add(preload_path); //0
+        path_controller.add(parking_path);
 
         while (!isStarted()) {
+            robot.read();
+            robot.update();
+            robot.write();
+            robot.clearBulkCache(Global.Hub.CONTROL_HUB);
             double loop = System.nanoTime();
             telemetry.addLine("Autonomous initializing...");
             telemetry.addData("Frequency", 0);
@@ -133,34 +109,51 @@ public class SampleAuto extends CommandOpMode {
                 new SequentialCommandGroup(
                         new InstantCommand(timer::reset),
 
-                        //pre-load specimen
-                        new MoveCommand(() -> path_controller.calculateGoal(0), 2600),
-
-                        new WaitCommand(400),
-
-                        //push all the samples
-                        new MoveCommand(() -> path_controller.calculateGoal(1), 13500),
-
-                        //2nd specimen
+                        //pre-load sample
+                        new MoveCommand(() -> path_controller.calculateGoal(0), 2400, 0.5)
+                                .alongWith(new SampleScoreState()),
                         new WaitCommand(200),
-                        new MoveCommand(() -> path_controller.calculateGoal(3), 2600),
+                        new SampleDropSequence(),
 
-                        //3rd specimen
-                        new MoveCommand(() -> path_controller.calculateGoal(2), 2800),
-                        new MoveCommand(() -> path_controller.calculateGoal(4), 2600),
+                        //2nd sample
+                        new MoveCommand(new Pose(12, 15, 0), 1500, 0.5)
+                                .alongWith(new DelayCommand(new AutoSampleIntakeState(0.5), 800)),
+                        new DelayCommand(new SamplePickUpSequence(), 500),
+                        new DelayCommand(new IntakeClawCommand(Intake.ClawState.CLOSED), 300),
+                        new DelayCommand(new IntakeSetState(Intake.State.TRANSFER), 100),
+                        new DelayCommand(new TransferState(), 100),
+                        new DelayCommand(new TransferSequence(), 1000),
+                        new MoveCommand(bucket_pose, 1500, 0.5)
+                                .alongWith(new DelayCommand(new DepositExtensionSetState(Extension.State.EXTEND), 200)),
+                        new DelayCommand(new SampleScoreState(), 300),
+                        new DelayCommand(new SampleDropSequence(), 800),
+                        new WaitCommand(250),
 
-                        //4th specimen
-                        new MoveCommand(() -> path_controller.calculateGoal(2), 2800),
-                        new MoveCommand(() -> path_controller.calculateGoal(5), 2600),
+                        //3rd sample
+                        new MoveCommand(new Pose(12, 25, Math.toRadians(5)), 1500, 0.5)
+                                .alongWith(new DelayCommand(new AutoSampleIntakeState(0.5), 800)),
+                        new DelayCommand(new SamplePickUpSequence(), 500),
+                        new DelayCommand(new IntakeClawCommand(Intake.ClawState.CLOSED), 300),
+                        new DelayCommand(new IntakeSetState(Intake.State.TRANSFER), 100),
+                        new DelayCommand(new TransferState(), 100),
+                        new DelayCommand(new TransferSequence(), 1000),
+                        new MoveCommand(bucket_pose, 1500, 0.5)
+                                .alongWith(new DelayCommand(new DepositExtensionSetState(Extension.State.EXTEND), 200)),
+                        new DelayCommand(new SampleScoreState(), 300),
+                        new DelayCommand(new SampleDropSequence(), 800),
+                        new WaitCommand(250),
+
+
+                        //4th sample
+                        new MoveCommand(new Pose(35, 10, 0), 2500, 0.5)
+                                .alongWith(new DelayCommand(new TransferState(), 1000)),
+//                                .alongWith(new DepositExtensionSetState(Extension.State.HANG)),
+////                                .alongWith(new DelayCommand(new AutoSampleIntakeState(1), 1500)),
+////                        new DelayCommand(new SamplePickUpSequence(), 500),
+////                        new DelayCommand(new IntakeClawCommand(Intake.ClawState.CLOSED), 300),
 //
-//                        //5th specimen
-//                        new MoveCommand(() -> path_controller.calculateGoal(2)),
-//                        new SpecimenAimSequence(),
-//                        new MoveCommand(() -> path_controller.calculateGoal(6)),
-//                        new SpecimenInSequence(),
-
-                        //observation zone park
-                        new MoveCommand(() -> new Pose(2, -30, 0)),
+//                        //level 1 hang
+//                        new MoveCommand(new Pose(50, -20, Math.PI/2)),
 
                         new InstantCommand(() -> end_time = timer.seconds())
 

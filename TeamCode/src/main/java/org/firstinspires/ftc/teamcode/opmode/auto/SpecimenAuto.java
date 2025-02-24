@@ -65,35 +65,35 @@ public class SpecimenAuto extends CommandOpMode {
         robot.deposit.update();
         robot.deposit.write();
         robot.localizer.setThetaOffset(0); //OFFSET STARTING VALUE AS NEEDED
-        robot.drivetrain.setPodsHeading(Math.tan(20.0/37));
+        robot.drivetrain.setPodsHeading(Math.tan(20.0/36));
 
         robot.localizer.reset(new Pose(0, 0, 0));
 
         if (Global.USING_DASHBOARD) telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         Path scoring_path1 = new Path(
-                new Pose(36, 20, 0)
+                new Pose(35, 20, 0)
         );
 
         Path scoring_path2 = new Path(
-                new Pose(36, 14, 0)
+                new Pose(35, 16, 0)
         );
 
         Path scoring_path3 = new Path(
-                new Pose(36, 16, 0)
+                new Pose(35, 18, 0)
         );
 
         Path scoring_path4 = new Path(
-                new Pose(36, 18, 0)
+                new Pose(35, 20, 0)
         );
 
         Path scoring_path5 = new Path(
-                new Pose(36, 20, 0)
+                new Pose(35, 22, 0)
         );
 
         Path intaking_path = new Path(
-                new Pose(20, -20, 0),
-                new Pose(0, -20, 0)
+                new Pose(25, -20, 0),
+                new Pose(-0.5, -20, 0)
         );
 
         Path push_path = new Path(
@@ -102,21 +102,21 @@ public class SpecimenAuto extends CommandOpMode {
                 new Pose(20, -15, 0),
                 new Pose(50, -25, 0),
                 new Pose(50, -35, 0),
-                new Pose(11, -30, 0),
+                new Pose(9, -30, 0),
 
                 //2nd sample
                 new Pose(50, -35, 0),
                 new Pose(50, -43, 0),
-                new Pose(11, -43, 0),
+                new Pose(9, -43, 0),
 
                 //3rd sample
                 new Pose(50, -43, 0),
                 new Pose(53, -47, 0),
-                new Pose(11, -47 , 0),
+                new Pose(6, -47 , 0),
 
                 //specimen pickup
-                new Pose(20, -20, 0),
-                new Pose(-1, -20, 0)
+                new Pose(25, -20, 0),
+                new Pose(-0.5, -20, 0)
         );
 
         path_controller = new PurePursuit(10, 0, 0);
@@ -160,7 +160,7 @@ public class SpecimenAuto extends CommandOpMode {
                         new WaitCommand(100),
 
                         //push samples
-                        new MoveCommand(() -> path_controller.calculateGoal(6), 11000),
+                        new MoveCommand(() -> path_controller.calculateGoal(6), 12000),
 
                         //2nd specimen
                         new DepositClawCommand(Deposit.ClawState.CLOSED),

@@ -34,7 +34,7 @@ public class SwervePod implements WSubsystem {
     public PIDF heading_controller;
     public static double kP = 0.6;
     public static double kI = 0;
-    public static double kD = 0.0005;
+    public static double kD = 0.0002;
     public static double kF = 0;
 
     public double HEADING_TO_SERVO_RATIO = 1.0;
